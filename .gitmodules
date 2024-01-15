@@ -1,0 +1,3 @@
+[submodule "themes/hextra"]
+	path = themes/hextra
+	url = git@github.com:flyingmachine/hextra.git

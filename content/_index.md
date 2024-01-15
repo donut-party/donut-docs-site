@@ -1,6 +1,7 @@
 ---
 title: My Site
 toc: false
+layout: hextra-home
 ---
 
 This is the landing page.
