@@ -88,6 +88,7 @@ the component and each value is the component's definition. A component
 definition specifies the component's behavior. In this example, the `:printer`
 component definition is a map that has two keys, `::ds/start` and `::ds/stop`.
 These keys are names of _signal handlers_, which you'll learn about momentarily.
+
 `::ds/start` and `::ds/stop` are both associated with a function. These
 functions are where you specify a component's behavior.
 
@@ -163,21 +164,25 @@ as well as a value for `::ds/config`. The `:printer` component's `:ds/config` is
 a map that contains a _ref_ to the `:stack` component. Refs allow one component
 to refer to and use another component; you'll learn more about them below.
 
-You start the system by calling `(ds/signal system ::ds/start)`. This produces an
-updated system map (bound to `running-system`) which you then use when stopping
-the system with `(ds/signal running-system :stop)`.
+You start the system by calling `(ds/signal system ::ds/start)`. When you send a
+signal using `ds/signal`, it calls the corresponding signal handler for all
+components in dependency order. In the printer system, `[:app :printer]` depends
+on `[:services :stack]`, so `[:services :stack]` is started first.
+
+`ds/signal` returns an updated system map (bound to `running-system`) which you
+then use when stopping the system with `(ds/signal running-system :stop)`.
 
 ### Components
 
-Components have _definitions_ and _instances._
+Components have two manifestations: _definitions_ and _instances._
 
 #### Component Definitions
 
-Components are defined as maps that associate signal names with signal handlers.
-Signal names include `:donut.system/start`, `:donut.system/stop`, and more.
+Component definitions (or just _defs_ for short) are maps that associate signal
+names with signal handlers. Signal names include `:donut.system/start`,
+`:donut.system/stop`, and more.
 
-Component definitions (or just _defs_ for short) are composed into systems by
-including them in component groups:
+Component defs are composed into systems by including them in component groups:
 
 ``` clojure
 (def Stack
@@ -193,25 +198,26 @@ component name `:stack`.
 
 A few notes about naming and organization:
 
-* The names `:services`, `:stack`, and `Stack` are completely arbitrary. There
-  doesn't have to be any correspondence between the names `:stack` and `Stack`,
-  for example
+* The names `:services`, `:stack`, and `Stack` are completely arbitrary. In
+  particular, there doesn't have to be any correspondence between the names
+  `:stack` and `Stack`.
 * You do not have to place component definitions in a separate var. Do whatever
   works best for you to make your code understandable, maintainable, and
   reusable.
 * If you do place component definitions in a var, it's recommend to use
   CamelCase for the var's name.
+* These docs cover some interesting things you can do with component groups, but
+  for now you can just consider them an organizational aid.
 
-> These docs cover some interesting things you can do with component groups, but
-> for now you can just consider them an organizational aid.
+#### Signal handlers
 
-A def map can contain _signal handlers_. These are used to create component
+A def map contains _signal handlers_. These are used to create component
 _instances_ and implement component behavior. A def can also contain additional
 configuration values that will get passed to the signal handlers.
 
-In the example above, we've defined a `::ds/start` signal handlers. Signal
-handlers are just functions with one argument, a map. This map includes the key
-`::ds/config`, and its value is taken from the `::ds/config` key in your
+In the `Stack` example above, we've defined a `::ds/start` signal handler.
+Signal handlers are just functions with one argument, a map. This map includes
+the key `::ds/config`, and its value is taken from the `::ds/config` key in your
 component definition. With the `Stack` component, that means that the map will
 contain `{:items 10}`. You can see that the `::ds/start` signal handler
 destructures `::ds/config` out of its first argument, and then looks up
@@ -231,19 +237,29 @@ mock out a component, you just have to use `assoc-in` to assign a new
 #### Component Instances
 
 Signal handlers return a _component instance_, which is stored in the system map
-under `::ds/instances`. Try this to see a system's instances:
+under `::ds/instances`. Example:
 
 ``` clojure
+(def Stack
+  #::ds{:start  (fn [{{:keys [items]} ::ds/config}] (atom (vec (range items))))
+        :config {:items 10}})
+
+(def system {::ds/defs {:services {:stack Stack}}})
+
 (::ds/instances (ds/signal system ::ds/start))
+;; =>
+{:services {:stack #<Atom@5d67ff63: [0 1 2 3 4 5 6 7 8 9]>}}
 ```
 
-This is how you can access component instances for tests.
+The updated system map stores the atom returned by `[:services :stack]`
+component's `::ds/start` signal handler under `[::ds/instances :services
+:stack]`.
 
-Component instances are added to the signal handler's argument under the
-`::ds/instance` key. When you apply the `::ds/start` signal to a `Stack`
-component, it creates a new atom, and when you apply the `::ds/stop` handler the
-atom is passed in under `::ds/instance` key. In the example above, the
-`::ds/stop` signal handler destructures this:
+When donut.system calls a component's signal handler, it passes in that
+component's instance under the `::ds/instance` key. So `when you apply the
+`::ds/start` signal to a `Stack` component, it creates a new atom, and when you
+apply the `::ds/stop` handler the atom is passed in under `::ds/instance` key.
+In the example above, the `::ds/stop` signal handler destructures this:
 
 ``` clojure
 (fn [{::ds/keys [::ds/instance]}] (reset! instance []))
@@ -255,6 +271,9 @@ thread pool or whatever, and place that in the system map under
 `::ds/instances`. The `::ds/stop` handler can retrieve this instance, and it can
 then call whatever functions or methods are needed to to deallocate the
 resource.
+
+It's also how you can retrieve system values for tests or when working at the
+REPL.
 
 You don't have to define a handler for every signal. Components that don't have
 a handler for a signal are essentially skipped when you send a signal to a
