@@ -43,7 +43,8 @@ To use donut.system, you first define a _system_ that contains _component
 groups_. Component groups contain _component definitions_. Component definitions
 include _signal handlers_ that specify component behaviors.
 
-Here's an example of a system definition:
+Systems, component groups, and component definitions are just maps that are
+structured a particular way. Here's an example of a system definition:
 
 ``` clojure
 (ns donut.examples.single-component
@@ -73,9 +74,9 @@ doc](docs/namespaced-keywords.org).
 
 {{< /callout >}}
 
-This example defines a `system` var (the name `system` is arbitrary). Its value
-is a map that has one key, `::ds/defs`. This is where your component definitions
-live.
+This example defines a var named `system` (the name `system` is arbitrary). Its
+value is a map that has one key, `::ds/defs`. This is where your component
+definitions live.
 
 The value of `::ds/defs` is a map, where the keys are names for component
 groups. In this case, there's only one component group, `:app`. `:app` is an
@@ -172,10 +173,8 @@ Components have _definitions_ and _instances._
 
 #### Component Definitions
 
-Components are (usually) defined as maps that associate signal names with signal
-handlers. Signal names include `:donut.system/start`, `:donut.system/stop`, and
-more. (Later on you'll learn about other ways to define components that don't fit this
-pattern.)
+Components are defined as maps that associate signal names with signal handlers.
+Signal names include `:donut.system/start`, `:donut.system/stop`, and more.
 
 Component definitions (or just _defs_ for short) are composed into systems by
 including them in component groups:
@@ -189,8 +188,8 @@ including them in component groups:
 ```
 
 In this example, we've created a var named `Stack` to define a component. We've
-incorporated it into a system under group component group name `:services` and
-the component name `:stack`.
+incorporated it into a system under component group name `:services` and the
+component name `:stack`.
 
 A few notes about naming and organization:
 
@@ -206,23 +205,28 @@ A few notes about naming and organization:
 > These docs cover some interesting things you can do with component groups, but
 > for now you can just consider them an organizational aid.
 
-A def map can contain _signal handlers_, which are used to create component
+A def map can contain _signal handlers_. These are used to create component
 _instances_ and implement component behavior. A def can also contain additional
 configuration values that will get passed to the signal handlers.
 
 In the example above, we've defined a `::ds/start` signal handlers. Signal
 handlers are just functions with one argument, a map. This map includes the key
 `::ds/config`, and its value is taken from the `::ds/config` key in your
-component definition. In the example above, that means that the map will contain
-`{:items 10}`. You can see that the `::ds/start` signal handler destructures
-`::ds/config` out of its first argument, and then looks up `:items`.
+component definition. With the `Stack` component, that means that the map will
+contain `{:items 10}`. You can see that the `::ds/start` signal handler
+destructures `::ds/config` out of its first argument, and then looks up
+`:items`.
 
-(Other key/value pairs get added to the signal handler's map, and I'll cover
-those as we need them.)
+(Other key/value pairs get added to the signal handler's map, and the docs cover
+those as needed.)
 
 This approach to defining components lets us easily modify them. If you want to
 mock out a component, you just have to use `assoc-in` to assign a new
-`::ds/start` signal handler.
+`::ds/start` signal handler:
+
+``` clojure
+(assoc-in system [::ds/defs :services :stack SomeMock])
+```
 
 #### Component Instances
 
@@ -230,7 +234,7 @@ Signal handlers return a _component instance_, which is stored in the system map
 under `::ds/instances`. Try this to see a system's instances:
 
 ``` clojure
-(::ds/instances (ds/signal system :start))
+(::ds/instances (ds/signal system ::ds/start))
 ```
 
 This is how you can access component instances for tests.
@@ -242,7 +246,7 @@ atom is passed in under `::ds/instance` key. In the example above, the
 `::ds/stop` signal handler destructures this:
 
 ``` clojure
-(fn [{::ds/keys [instance]}] (reset! instance []))
+(fn [{::ds/keys [::ds/instance]}] (reset! instance []))
 ```
 
 This is how you can allocate and deallocate the resources needed for your
