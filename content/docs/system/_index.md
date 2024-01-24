@@ -37,7 +37,7 @@ helps you manage this source of complexity. With it, you can:
 
 ## Basic Usage
 
-### Defining and interacting with a system
+### Define and interact with a system
 
 To use donut.system, you first define a _system_ that contains _component
 groups_. Component groups contain _component definitions_. Component definitions
@@ -107,9 +107,9 @@ corresponding signal handler function. This _signal_ and _send_ terminology is
 metaphorical; there's no network or sockets or anything like that involved.
 
 The return value of a signal handler becomes the component's _instance._ A
-component instance is typically some object that you can use to stop the
-component; In our printer example the `::ds/start` signal handler returns a
-future whose execution we can stop with `future-cancel`. 
+component instance can be some object that you can use to stop the component; In
+our printer example the `::ds/start` signal handler returns a future whose
+execution we can stop with `future-cancel`.
 
 `(ds/signal system ::ds/start)` returns an updated system map that includes
 component instances. If you send another signal to the updated system map, it
@@ -364,7 +364,7 @@ where `component-key` is a vector of the form `[group-name component-name]`.
 These refs are used to determine the order in which signals are applied to
 components. Since the `:printer` refers to the `:stack`, we know that it depends
 on a `:stack` instance to function correctly. Therefore, when we send a
-`:start` signal, it's handled by `:stack` before `:printer.`
+`:start` signal, it's handled by `:stack` before `:printer`.
 
 Within `:printer`'s `:start` signal handler, `stack` refers to the atom created
 by the `:stack` component.
@@ -398,7 +398,7 @@ ref. Something like this wont' work:
 {::ds/defs {:app {:printer #::ds{:start (fn [_] (ds/ref [:services :stack]))}}}}
 ```
 
-It won't work because you `ds/ref` resides inside a function definition that
+It won't work because `ds/ref` resides inside a function definition that
 isn't reachable by `(get-in system [:app :printer ::ds/start])`.
 
 ### Constant instances
@@ -528,7 +528,7 @@ map" approach. In the mean time, [this Lambda Island blog post on Coffee
 Grinders](https://lambdaisland.com/blog/2020-03-29-coffee-grinders-2) does a
 good job of explaining it.
 
-### Config helpers
+### Per-environment system configuration
 
 `donut.system/named-system` is a multimethod you can use to register system
 maps. This can be useful for defining dev, test, and prod systems:
