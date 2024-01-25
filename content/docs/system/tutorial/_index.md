@@ -1,16 +1,14 @@
 ---
 title: Tutorial
+next: 01-your-first-system
 ---
 
-This tutorial guides you through... by the end of it you'll be comfortable using
-donut.system for your own applications
+This tutorial guides you through the basics of using donut.system to structure
+and interact with your application. By the end of it you'll be comfortable
+creating and using systems, component groups, components, signal handlers, and
+references. You'll understand exactly what's going on in this example:
 
-{{< cards >}}
-  {{< card link="01-your-first-system" title="01: Your First System" icon="book-open" >}}
-{{< /cards >}}
 
-## Notes / TOC
-
-* your first system
-* signal handlers
-* references
+* [01: Your First System](01-your-first-system)
+* [02: Signal Handlers](01-your-first-system)
+* [03: References](01-your-first-system)
