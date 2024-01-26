@@ -1,5 +1,7 @@
 ---
 title: "01: Your First System"
+prev: _index
+next: 02-implementing-behavior-with-signal-handlers
 ---
 
 {{< callout type="info" >}}
@@ -9,14 +11,14 @@ GitHub](https://github.com/donut-party/system/tree/main/dev/donut/examples/tutor
 
 {{< /callout >}}
 
+## Systems, components, and signal handlers
+
 donut.system supports you in thinking about your application as a system of
 interacting components, where:
 
 * components are well-boundaried collections of processes and state that produce
   behavior to achieve some task.
 * systems are collections of components
-
-## Systems, components, and signal handlers
 
 How does the library do this? By giving you a way to express the conceptual,
 architectural organization of your application in code. Let's look at a very
@@ -49,10 +51,10 @@ keyword -- that produces the behavior we saw?
 
 Conceptually, donut.system models system behavior in terms of sending and
 responding to signals. (This is metaphorical: there's no network or sockets or
-anything like that involved.) The system of composed of components define
-_signal handlers_, and when you "send" a signal to a system it _applies_ the
-signal by traversing each component and calling its signal handler for that
-signal. This signal handlers are what actually "do stuff" in your application.
+anything like that involved.) The system of components define _signal handlers_,
+and when you "send" a signal to a system it _applies_ the signal by traversing
+each component and calling its signal handler for that signal. This signal
+handlers are what actually "do stuff" in your application.
 
 This idea manifests in your code in the way components are defined. You define
 components as maps that associate signal names (like `::ds/start`) with signal
@@ -71,7 +73,12 @@ There's more to donut.system, but this is the foundation: giving you the tools
 to structure your application as a system of components that produce behavior by
 handling signals.
 
-## The anatomy of a system map
+How might you modify this system definition so that your component can handle
+other signals? Let's look at that next.
+
+## How component definitions are organized
+
+
 
 ## What `ds/signal` returns
 
@@ -104,3 +111,11 @@ In this chapter, you will learn:
 * explain all the keys involved
 * point out what's relevant, what's not
 * donut.system exposes a lot, that's what makes it extensible
+
+---
+
+Next steps:
+
+* Give another example
+* Have an exercise
+* Ask about expectations
