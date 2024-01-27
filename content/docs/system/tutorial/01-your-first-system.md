@@ -92,7 +92,9 @@ other signals? Let's look at that next.
   * ordering behavior
     * filling a cache
     * constructing a db thread pool
-
+* configuration: all the different methods
+  * runtime
+  * aero
 
 ---
 
