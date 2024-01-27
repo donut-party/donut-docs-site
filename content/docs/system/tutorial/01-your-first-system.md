@@ -24,7 +24,7 @@ How does the library do this? By giving you a way to express the conceptual,
 architectural organization of your application in code. Let's look at a very
 simple example:
 
-``` clojure {filename="dev/donut/examples/tutorial/01_your_first_system.clj"}
+``` clojure {linenos=table,filename="dev/donut/examples/tutorial/01_your_first_system.clj"}
 (ns donut.examples.tutorial.01-your-first-system
   (:require
    [donut.system :as ds]))
@@ -39,11 +39,12 @@ simple example:
 donuts are yummy!
 ```
 
-Going from the bottom up: we're calling `ds/signal` with two arguments, a
-_system map_ and the _signal_ `::ds/start`. You can see that there's a map that
-has the `:printer` with a map as its value, and that inner map includes the key
-`::ds/start` -- the same keyword that we passed to `ds/signal`. Its function
-gets called, and the result is that a true statement about donuts got printed.
+Going from the bottom up: on line 10 we're calling `ds/signal` with two
+arguments, a _system map_ and the _signal_ `::ds/start`. On line 8y ou can see
+that there's a map that has the key `:printer` with a map as its value, and that
+inner map includes the key `::ds/start` -- the same keyword that we passed to
+`ds/signal`. Its function gets called, and the result is that a true statement
+about donuts got printed.
 
 How does this happen? What is the relationship between all these pieces -- the
 `ds/signal` function, the structure of the `system` map, and the `::ds/signal`
@@ -76,30 +77,6 @@ handling signals.
 How might you modify this system definition so that your component can handle
 other signals? Let's look at that next.
 
-## How component definitions are organized
-
-
-
-## What `ds/signal` returns
-
-In the example above, the system has a component that defines a signal handler
-for `::ds/start`
-
-When you call `ds/signal`, it _applies_ the signal by traversing the system's
-component definitions and calling the
-
-
-
-
-
-In this chapter, you will learn:
-
-* How donut.system represents systems and components as dat structures
-* The structure of a system map and a component map
-* why start?
-  * ordering behavior
-    * filling a cache
-    * constructing a db thread pool
 
 ## Notes
 
@@ -111,6 +88,11 @@ In this chapter, you will learn:
 * explain all the keys involved
 * point out what's relevant, what's not
 * donut.system exposes a lot, that's what makes it extensible
+* why name it "start"?
+  * ordering behavior
+    * filling a cache
+    * constructing a db thread pool
+
 
 ---
 
