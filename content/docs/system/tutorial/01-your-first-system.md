@@ -107,26 +107,19 @@ other signals? Let's look at that next.
 
 ## Notes
 
-* Start with data structure
-* ::ds/defs
-* what is a system?
-* error messages if you get it wrong
-* component which does nothing
-* explain all the keys involved
-* point out what's relevant, what's not
+* real-world example
+  * system namespace
+* testing
 * donut.system exposes a lot, that's what makes it extensible
-* why name it "start"?
-  * ordering behavior
-    * filling a cache
-    * constructing a db thread pool
 * configuration: all the different methods
   * runtime
   * aero
 * dev tools: inspecting, maintaining
 * REPL development
 * named-system multimethod
-* real-world example
+  **
 * doesn't have to be stateful
+* error messages if you get it wrong
 
 ---
 
