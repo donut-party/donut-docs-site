@@ -4,8 +4,8 @@ prev: 01-your-first-system
 ---
 
 Components define signal handlers that respond to signals to produce behavior,
-where "behavior" is a combination of processes and state that yields some state
-that you care about.
+where "behavior" is a combination of processes and state that yields some
+desired state.
 
 Your components can implement arbitrary signal handlers, but generally they'll
 implement `::ds/start` and, if needed, `::ds/stop`. The example below has a
@@ -51,16 +51,13 @@ component that simulates polling an API: the `::ds/start` handler creates a
 
 There are many things going on here that we need to examine:
 
-* The core Clojure functions, `future` and `future-cancel`
+* The component's behavior, using the core Clojure functions `future` and `future-cancel`
 * The value returned by signal handlers
 * The way we hold on to the running poller so that we can then stop it
 
-## `future` and `future-cancel`
+## Component behavior
 
-It will help to understand what the component is actually *doing* -- if you're
-familiar with the `future` and `future-cancel` functions, you can skip this
-section.
-
+It will help to understand what the component is actually *doing*.
 `APIPollerComponent` has a `::ds/start` signal handler, a function with this
 body:
 
@@ -96,12 +93,11 @@ Programming](https://www.braveclojure.com/concurrency/).
 
 `future` returns a _future object_, and if you call `future-cancel` on it then
 you will stop the future's body from executing. This `future` / `future-cancel`
-combo is an easy, lightweight way to create a background process in your system.
-
-We create the atom `poll-data` to convey the results of this background process.
-In a later chapter you'll see examples of how components can refer to each other
-so that one can component can make use of the data/objects/results provided by
-another component.
+combo is an easy, lightweight way to create a background process in your system,
+and using an atom like `poll-data` is one way to convey your component's state
+to other parts of the system. (In a later chapter you'll see examples of how
+components can refer to each other so that one can component can make use of the
+data/objects/results provided by another component.)
 
 Both the future we create and the `poll-data` atom are returned by the
 `::ds/start` signal handler in the map `{:poller ..., :poll-data poll-data}`.
@@ -112,8 +108,8 @@ Let's look at how that get's used.
 When you call `(ds/signal system signal-name)`, the `ds/signal` function
 traverses all component definitions in `system` and calls the signal handler
 corresponding to `signal-name` for that component. The signal handler's return
-value is the component's _instance_ gets associated back into the system map
-under the `::ds/instances` key. After `ds/signal` is done calling all signal
+value is the component's _instance_ and it gets associated back into the system
+map under the `::ds/instances` key. After `ds/signal` is done calling all signal
 handlers, it returns an updated system map that includes these component
 instances:
 
@@ -228,7 +224,7 @@ Here's one way you could do it:
 ```
 
 Here we've used `assoc-in` to produce an updated system map with a new value for
-the poller's `:interval`. Because this configuration is now accessible within
+the poller's `:interval`. Because the interval value is now accessible within
 the system map (as opposed to living inaccessibly within the body of the
 `future`), it can be modified using everyday Clojure functions.
 

@@ -17,7 +17,7 @@ donut.system supports you in thinking about your application as a system of
 interacting components, where:
 
 * components are well-boundaried collections of processes and state that produce
-  behavior to achieve some task.
+  behavior
 * systems are collections of components
 
 How does the library do this? By giving you a way to express the conceptual,
@@ -40,7 +40,7 @@ donuts are yummy!
 ```
 
 Going from the bottom up: on line 10 we're calling `ds/signal` with two
-arguments, a _system map_ and the _signal_ `::ds/start`. On line 8y ou can see
+arguments, a _system map_ and the _signal_ `::ds/start`. On line 8 you can see
 that there's a map that has the key `:printer` with a map as its value, and that
 inner map includes the key `::ds/start` -- the same keyword that we passed to
 `ds/signal`. Its function gets called, and the result is that a true statement
@@ -70,7 +70,34 @@ So when you call `(ds/signal system some-signal-name)`, it looks for all
 components definition maps that have a key of `some-signal-name`, and calls the
 corresponding function.
 
-There's more to donut.system, but this is the foundation: giving you the tools
+When I say "it looks for all component definition maps", I mean that component
+definition maps must be organized in a particular way within the system map for
+them to be found and used. The general structure is:
+
+``` clojure
+{::ds/defs
+ {:group-1
+  {:component-1 component-def-map
+   :component-2 component-def-map}
+  :group-2
+  {:component-3 component-def-map}}}
+```
+
+The value of `::ds/defs` is map whose keys are group names, and and whose values
+are component groups. A component group is a map whose keys are component name,
+and whose values are component maps.
+
+For a map to be treated as a component definition, it must be located at the
+correct place within these nested maps. It must be accessible via get-into using
+a 3-element path like `[::ds/defs :group-1 :component-1]`; this won't work:
+
+``` clojure
+{::ds/defs
+ {:group-1
+  {:sub-group-1 component-def-map}}}
+```
+
+There's more to donut.system, but this is the foundation: it gives you the tools
 to structure your application as a system of components that produce behavior by
 handling signals.
 
@@ -95,6 +122,11 @@ other signals? Let's look at that next.
 * configuration: all the different methods
   * runtime
   * aero
+* dev tools: inspecting, maintaining
+* REPL development
+* named-system multimethod
+* real-world example
+* doesn't have to be stateful
 
 ---
 
