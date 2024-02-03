@@ -104,27 +104,12 @@ handling signals.
 How might you modify this system definition so that your component can handle
 other signals? Let's look at that next.
 
+## Summary
 
-## Notes
-
-* real systems
-  * organizing with named-system
-  * constant instances and deep refs
-  * system namespace
-  * configuration: all the different methods
-    * runtime
-    * aero
-* testing
-* donut.system exposes a lot, that's what makes it extensible
-* dev tools: inspecting, maintaining
-* REPL development
-* doesn't have to be stateful
-* error messages if you get it wrong
-
----
-
-Next steps:
-
-* Give another example
-* Have an exercise
-* Ask about expectations
+* Components are well-boundaried collections of processes and state that produce
+  behavior
+* Systems are collections of components
+* You define components as maps of signal handlers
+* Signal handlers produce behavior in response to signals
+* You place components in a system maps under component groups, where component
+  groups live under the `::ds/defs` key

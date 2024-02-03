@@ -3,6 +3,13 @@ title: "03: Multiple Components and References"
 prev: 02-implementing-behavior-with-signal-handlers
 ---
 
+{{< callout type="info" >}}
+
+You can view all source for examples [on
+GitHub](https://github.com/donut-party/system/tree/main/dev/donut/examples/tutorial)
+
+{{< /callout >}}
+
 Systems can contain multiple components, and those components can refer to each
 other. In the example below we've updated our `APIPollerComponent` so that the
 "data store" it uses (a humble atom) is placed in its own component.
@@ -184,3 +191,15 @@ paths; it would not be good!
 
 So I guess I lied earlier when I said there's not much to component groups. In
 fact, they let you do something very useful: use local refs.
+
+## Summary
+
+* Systems can contain multiple components, and those components can refer to
+  each other
+* System definitions are maps organized in a `::ds/defs` -> component group ->
+  component hierarchy
+* You use the `ds/ref` function to create refs. It takes one argument, a
+  two-element vector of `[component-group-name component-name]`: a _component
+  id_
+* Signals are called in dependency order
+* You can use local refs to refer to components that belong to the same group

@@ -3,6 +3,13 @@ title: "04: Environment Configuration"
 prev: 03-multiple-components-and-references
 ---
 
+{{< callout type="info" >}}
+
+You can view all source for examples [on
+GitHub](https://github.com/donut-party/system/tree/main/dev/donut/examples/tutorial)
+
+{{< /callout >}}
+
 Most applications need to read configuration values from their environment. Such
 configuration typically includes connection parameters for databases and API
 services. What's more, configuration values vary per environment (local, qa,
@@ -59,9 +66,9 @@ running in. Below is an example of how to handle this with donut.system:
 
 The strategy here is:
 
-1. Use an external library, [aero](https://github.com/juxt/aero), to transorm
-   config files into Clojure data structures for your application. aero is EDN,
-   but with some enhancements, including a little syntax sugar for incorporating
+1. Use another library, [aero](https://github.com/juxt/aero), to transorm config
+   files into Clojure data structures for your application. aero is EDN, but
+   with some enhancements, including a little syntax sugar for incorporating
    environment variables and for producing different values based on the
    `:profile` you pass in. `env-config` uses aero on line 8; see the aero docs
    for more info.
@@ -202,6 +209,16 @@ system -- the components that produce the behavior your care about -- while
 giving you the flexibility to configure these components for different
 environments.
 
-This gets you most of the way to using donut.system in a real project. One
-missing piece is where to actually put all this. My recommendation is to create
-a `your-project.system` namespace and put your system definitions there.
+Where do you actually put all this? My recommendation is to create a
+`your-project.system` namespace and put your system definitions there.
+
+And with that, you now have all the basics you need for effectively using
+donut.system in a real project! Woo!
+
+## Summary
+
+* Any component definition that isn't a map of signal handlers is treated as a
+  _constant instance_
+* You can use `ds/named-system` to register different system definitions
+* Refs can actually refer to any part of a system's `::ds/instances` that's
+  reachable via `get-in`

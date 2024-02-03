@@ -3,6 +3,13 @@ title: "02: Implementing Behavior with Signal Handlers"
 prev: 01-your-first-system
 ---
 
+{{< callout type="info" >}}
+
+You can view all source for examples [on
+GitHub](https://github.com/donut-party/system/tree/main/dev/donut/examples/tutorial)
+
+{{< /callout >}}
+
 Components define signal handlers that respond to signals to produce behavior,
 where "behavior" is a combination of processes and state that yields some
 desired state.
@@ -284,6 +291,17 @@ This doesn't send a signal to the system, it just produces a system map.
 That covers it for signal handling! This should be enough to allow you to get
 you writing components that can start and stop themselves, and who doesn't want
 that?? Next, let's look at how to work with more than one component.
+
+## Summary
+
+* Signal handlers return _component instances_
+* A component's instance is passed in to its signal handler via the
+  `::ds/instance` key
+* You typically use `::ds/start` and `::ds/stop` signal handlers to start and
+  stop a component
+* You can pass in component configuration with the `::ds/config` key
+* You can modify component definitions with regular ol' core functions or with
+  override syntax
 
 ## Further reading
 
