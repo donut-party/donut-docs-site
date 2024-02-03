@@ -111,15 +111,13 @@ other signals? Let's look at that next.
   * organizing with named-system
   * constant instances and deep refs
   * system namespace
+  * configuration: all the different methods
+    * runtime
+    * aero
 * testing
 * donut.system exposes a lot, that's what makes it extensible
-* configuration: all the different methods
-  * runtime
-  * aero
 * dev tools: inspecting, maintaining
 * REPL development
-* named-system multimethod
-  **
 * doesn't have to be stateful
 * error messages if you get it wrong
 

@@ -93,7 +93,7 @@ makes it easy for you to understand and maintain your code.
 
 By contrast, donut.system _does_ have a naming system for referring to
 components within a system. For example, `ds/instance` will return a component
-instance:
+instance when given a _component id_:
 
 ```clojure
 (def running-system (ds/start system))
@@ -127,8 +127,8 @@ refer to components within a system.
 `(ds/ref [:services :data-store])` produces the vector `[:donut.system/ref
 [:services :data-store]]`. References are our means of conveying component
 instances into the signal handlers of another component. In this case, we want
-`[:services :api-poller]` to have access to the instance produced by `[:produced
-:data store]`.
+`[:services :api-poller]` to have access to the instance produced by `[:services
+:data-store]`.
 
 To understand this, it helps to walk through what happens when you call
 `ds/start` on this system:
@@ -181,3 +181,6 @@ up possibilities for creating reusable components and component groups. They're
 similar to relative paths on a file system or relative URLs for web pages in
 that way. Imagine being restricted to only ever being able to use absolute
 paths; it would not be good!
+
+So I guess I lied earlier when I said there's not much to component groups. In
+fact, they let you do something very useful: use local refs.
