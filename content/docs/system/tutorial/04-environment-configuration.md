@@ -9,7 +9,7 @@ services. What's more, configuration values vary per environment (local, qa,
 prod, etc), so you need some way of specifying what environment your system is
 running in. Below is an example of how to handle this with donut.system:
 
-``` clojure
+``` clojure {linenos=table,filename="dev/donut/examples/tutorial/04_environment_configuration.clj"}
 (ns donut.examples.tutorial.04-environment-configuration
   (:require
    [aero.core :as aero]
@@ -57,12 +57,14 @@ running in. Below is an example of how to handle this with donut.system:
   (ds/system :base {[:env] (env-config :prod)}))
 ```
 
-The overall strategy being employed here is:
+The strategy here is:
 
 1. Use an external library, [aero](https://github.com/juxt/aero), to transorm
    config files into Clojure data structures for your application. aero is EDN,
    but with some enhancements, including a little syntax sugar for incorporating
-   environment variables. `env-config` uses aero on line 8.
+   environment variables and for producing different values based on the
+   `:profile` you pass in. `env-config` uses aero on line 8; see the aero docs
+   for more info.
 2. Create _named systems_ that introduce per-environment configuration by
    modifying a base system. The `:dev` and `:prod` named systems use the
    `env-config` function to read environment-specific values and place them in
@@ -71,31 +73,135 @@ The overall strategy being employed here is:
    component group. `APIPollerComponent` has refs for `[:env :api-poller
    :interval]` and `[:env :api-poller :source]` on lines 24 and 25. These are
    _deep refs_ and I cover them below.
-   
-This may look like a lot, but don't worry: it builds on everything we've done so
-far and only introduces a few new concepts, which we are going to examine in detail:
-
+  
+To fully understand this strategy, we need to understand:
+  
 * Constant instances
 * Deep refs
 * Named systems
 
+## Constant instances
+
+If a component definition is anything other than a map that includes signal
+handler keys, then it's treated as a "constant instance." Observe:
+
+``` clojure
+(ns donut.examples.tutorial.04-constant-instance
+  (:require
+   [donut.system :as ds]))
+
+(def system
+  {::ds/defs
+   {:env      {:db-conn-string "//localhost:5032etcetc"}
+    :services {:db {::ds/start  (fn [{:keys [::ds/config]}]
+                                  (prn "db-conn-string" (:db-conn-string config)))
+                    ::ds/config {:db-conn-string (ds/ref [:env :db-conn-string])}}}}})
+
+(ds/start system)
+```
+
+If you evaluate all of this at your REPL, you'll see the following get printed:
+
+```
+"db-conn-string" "//localhost:5032etcetc"
+```
+
+What's happening here is the `[:services :db]` component is referencing `[:env
+:db-conn-string]`. Recall that references are our means of conveying component
+instances into the signal handlers of another component.
+
+That means that the component instance for `[:env :db-conn-string]` is the
+string `"//localhost:5032etcetc"`. However, the component definition for `[:env
+:db-conn-string]` is not a map with signal handlers like we've seen so far; it's
+the string `"//localhost:5032etcetc"`. 
+
+This violates our understand of how component definitions work. So far, learned
+that component definitions are maps of signal handlers, and that signal handler
+return values become component instances. You would expect that for this to
+work, you would have to use the following component definition for `[:env
+:db-conn-string]`:
+
+```
+{::ds/start (constantly "//localhost:5032etcetc")}
+```
+
+However, because it's such a common use case to want to include such constant
+instances, donut.system was designed to support you in including the value
+directly, rather than having to wrap it in a signal handler.
+
+In practice, this means that components and component groups can essentially be
+paths in your system that house configuration. The full system at the top of
+this page takes this approach: it uses aero to read a config file, generating a
+Clojure map in the process. That Clojure map then gets placed under the `:env`
+component group. Other components can then access that configuration via refs.
+
+## Deep refs
+
+`APIPollerComponent` at the top of the page includes these two refs:
+
+``` clojure
+(ds/ref [:env :api-poller :interval])
+(ds/ref [:env :api-poller :source])
+```
+
+So far, we've only seen refs that take two-element vectors of the form
+`[component-group-name component-name]`. But in the code, the vectors have
+_three_ elements.
+
+Refs can actually take any number of elements; you can think of the vector you
+pass in as being used to perform a `get-in` on your system's instances:
+
+```
+(get-in (::ds/instances system) [:env :api-poller :interval])
+```
+
+If a component instance is a deeply-nested map, you can use refs to refer to any
+path within that map. This also works with vectors, as you can use `get-in` on
+vectors:
+
+``` clojure
+(get-in [[:a :b] [:c :d]] [1 0])
+;; =>
+:c
+```
+
+## Named systems
+
+The multimethod `ds/named-system` serves as a system definition registry. We can
+then use the function `ds/system` to retrieve a system definition and optionally
+override component definitions. We see this in the example at the top of the
+page:
+
+``` clojure{linenos=table,linenostart=28,filename="dev/donut/examples/tutorial/04_environment_configuration.clj"}
+(def base-system
+  {::ds/defs
+   {:env      {}
+    :services {:api-poller APIPollerComponent
+               :data-store DataStoreComponent}}})
+
+(defmethod ds/named-system :base
+  [_]
+  base-system)
+
+(defmethod ds/named-system :dev
+  [_]
+  (ds/system :base {[:env] (env-config :dev)}))
 
 
-## Notes
+(defmethod ds/named-system :prod
+  [_]
+  (ds/system :base {[:env] (env-config :prod)}))
+```
 
-You need to configure based on your environment: database connection info, API
-servers, etc.
+We register a system definition named `:base`, then we build on that system in
+the `:dev` and `:prod` named systems, overriding the `:env` component groups
+with environment-specific configurations produced by the `env-config` function.
 
-* Constant instances
-* Deep refs
-* Named systems
-* How to include environment variables and other configuration 
-* How to create different configurations for dev, prod, etc
+Together, all of these pieces allow you to define the main structure of your
+system -- the components that produce the behavior your care about -- while
+giving you the flexibility to configure these components for different
+environments.
 
-
-* organizing with named-system
-* constant instances and deep refs
-* system namespace
-* configuration: all the different methods
-  * runtime
-  * aero
+This gets you most of the way to using donut.system in a real project. One
+missing piece is where to actually put all this. My recommendation is to create
+a `your-project.system` namespace and put your system definitions there.
