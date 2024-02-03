@@ -107,7 +107,9 @@ other signals? Let's look at that next.
 
 ## Notes
 
-* real-world example
+* real systems
+  * organizing with named-system
+  * constant instances and deep refs
   * system namespace
 * testing
 * donut.system exposes a lot, that's what makes it extensible

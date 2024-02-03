@@ -28,7 +28,7 @@ make use of it:
    ::ds/stop   (fn [{:keys [::ds/instance]}]
                  (println "stopping")
                  (future-cancel instance))
-   ::ds/config {:interval 5000
+   ::ds/config {:interval   5000
                 :data-store (ds/ref [:services :data-store])}})
 
 (def system
@@ -120,7 +120,7 @@ refer to components within a system.
    ::ds/stop   (fn [{:keys [::ds/instance]}]
                  (println "stopping")
                  (future-cancel instance))
-   ::ds/config {:interval 5000
+   ::ds/config {:interval   5000
                 :data-store (ds/ref [:services :data-store])}})
 ```
 
@@ -148,77 +148,36 @@ To understand this, it helps to walk through what happens when you call
    store atom, so that gets passed in to the `::ds/start` signal handler, and
    the handler body is able to update the state of that atom.
 
-We use references as placeholders for the
-corresponding component instance. To understand this, let's walk through what
-happens when you call `(ds/start system)`:
+You might be wondering how the library knows to start `[:services :data-store]`
+before `[:services :api-poller]` -- after all, if it started the components in
+the reverse order then `[:services :api-poller]` would not be able to make use
+of the `[:services :data-store]` instance. When you put references in your
+system using `ds/ref`, the library internally constructs a directed graph of all
+such references so that it can correctly apply signals in dependency order.
 
+## Groups and local refs
 
+We could rewrite `APIPollerComponent` to use a _local ref_, like this:
 
-Our system 
-
-Adding component definitions to a system is a matter of placing values in the
-expected places in the system map. Defs are organized into component groups;
-this system has three components:
-
-* `[:env :http-port]`
-* `[:http :server]`
-* `[:http :handler]`
-
-If you wanted to add more components to the system, you would do so be adding
-more values to the `::ds/defs` map in the system map.
-
-You may have noticed a couple things about the defs in the system above:
-
-* The value `8080` at `[:env :http]` isn't a map! Nor is the function at `[:http
-  :handler]`. No `::ds/start` signal handlers in sight. What gives?
-* `ds/ref` and `ds/local-ref` are being used to encode the relationships among
-  components
-
-Let's look at each of these.
-
-## Constant instance
-
-So far, I've said that component definitions take the form of a map of signal
-handlers. However, that's not the whole truth: you can use _any_ values to
-define components. This is a valid system map:
-
-```
-(def constant-system
-  {::ds/defs
-   {:env {:env-name :production
-          :http     {:port 8080}
-          :db       {:username "bubba"
-                     :password "crawdads"}}}})
+``` clojure {linenos=table,linenostart=8,filename="dev/donut/examples/tutorial/03_multiple_components.clj",hl_lines=[13]}
+(def APIPollerComponent
+  {::ds/start  (fn [{:keys [::ds/config]}]
+                 (let [data-store (:data-store config)]
+                   (future (loop [i 0]
+                             (println "polling")
+                             (reset! data-store i)
+                             (Thread/sleep (:interval config))
+                             (recur (inc i))))))
+   ::ds/stop   (fn [{:keys [::ds/instance]}]
+                 (println "stopping")
+                 (future-cancel instance))
+   ::ds/config {:interval   5000
+                :data-store (ds/local-ref [:data-store])}})
 ```
 
-This system has three components: `[:env :env-name]`, `[:env :http]`, and `[:env
-:db]`. None of these definitions are maps with signal handlers.
-
-In such cases, donut.system internally treats these component definitions as if
-they're written like this:
-
-```clojure
-(def constant-system
-  {::ds/defs
-   {:env {:env-name {::ds/start (fn [_] :production)}
-          :http     {::ds/start (fn [_] {:port 8080})}
-          :db       {::ds/start (fn [_] {:username "bubba"
-                                         :password "crawdads"})}}}})
-```
-
-That is, any time you provide a component definition that's not a map that
-contains signal handlers, donut.system treats it as a "constant instance"
-
-
-## References
-
-## Component groups
-
-## Notes
-
-* Add a second component
-* names: var names, component names, system positions
-* References
-* The component graph, ordering, visualizing
-* Component groups
-* constant instances
+Local refs refer to components within the same component group. Local refs can
+be convenient in and of themselves, but their real value lies in how they open
+up possibilities for creating reusable components and component groups. They're
+similar to relative paths on a file system or relative URLs for web pages in
+that way. Imagine being restricted to only ever being able to use absolute
+paths; it would not be good!
