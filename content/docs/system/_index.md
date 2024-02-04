@@ -3,6 +3,12 @@ title: donut.system
 next: first-page
 ---
 
+<img
+  srcset="/img/donut-graph.jpg, /img/donut-graph@2x.jpg 2x"
+  src="/img/donut-graph@2x.jpg"
+  alt="donut graph"
+  style="width: 40%"/>
+
 [![Clojars Project](https://img.shields.io/clojars/v/party.donut/system.svg)](https://clojars.org/party.donut/system)
 
 As a developer, one of your tasks is decomposing an application into coherent,
