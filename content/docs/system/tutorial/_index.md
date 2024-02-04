@@ -1,5 +1,5 @@
 ---
-title: Tutorial
+title: donut.system Tutorial
 next: 01-your-first-system
 weight: 1
 ---
