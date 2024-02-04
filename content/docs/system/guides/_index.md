@@ -1,5 +1,6 @@
 ---
 title: Guides
+weight: 10
 ---
 
 * plugins

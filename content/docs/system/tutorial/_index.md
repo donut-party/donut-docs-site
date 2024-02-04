@@ -1,6 +1,7 @@
 ---
 title: Tutorial
 next: 01-your-first-system
+weight: 1
 ---
 
 This tutorial guides you through the basics of using donut.system to structure
