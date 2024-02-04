@@ -9,8 +9,8 @@ and interact with your application. By the end of it you'll be comfortable
 creating and using systems, component groups, components, signal handlers, and
 references. You'll understand exactly what's going on in this example:
 
-TODO
 
 * [01: Your First System](01-your-first-system)
-* [02: Signal Handlers](01-your-first-system)
+* [02: Implementing Behavior with Signal Handlers](02-implementing-behavior-with-signal-handlers)
+* [03: References](01-your-first-system)
 * [03: References](01-your-first-system)
