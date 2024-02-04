@@ -3,6 +3,30 @@ title: Donut
 toc: false
 layout: donut-home
 ---
+<script type="text/javascript">
+ function handleSubmit(e){
+   e.preventDefault();
+   const form=e.target;
+   const data = new FormData(form);
+   form.querySelector("input[type=email]").disabled=true;
+   form.querySelector("input.name").disabled=true;
+   form.querySelector("button").disabled=true;
+   form.querySelector("span.submitting").classList.remove("hidden");
+
+   const action = e.target.action;
+   fetch(action, {
+     method: 'POST',
+     body: data,
+   }).then(() => {
+     form.reset();
+     form.querySelector("input[type=email]").disabled=false;
+     form.querySelector("input.name").disabled=false;
+     form.querySelector("button").disabled=false;
+     form.querySelector("span.submitting").classList.add("hidden");
+     form.querySelector("span.submitted").classList.remove("hidden");
+   })
+ }
+</script>
 
 <div class="leading-6">
   <div class="relative overflow-hidden bg-white">
