@@ -61,5 +61,5 @@ Let's go!
 
 * [01: Your First System](01-your-first-system)
 * [02: Implementing Behavior with Signal Handlers](02-implementing-behavior-with-signal-handlers)
-* [03: Multiple Components and References](03-multiple-components-and-references)
+* [03: Multiple Components and References](03-component-references)
 * [04: Environment Configuraion](04-environment-configuration)
