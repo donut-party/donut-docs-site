@@ -103,7 +103,7 @@ you will stop the future's body from executing. This `future` / `future-cancel`
 combo is an easy, lightweight way to create a background process in your system,
 and using an atom like `poll-data` is one way to convey your component's state
 to other parts of the system. (In a later chapter you'll see examples of how
-components can refer to each other so that one can component can make use of the
+components can refer to each other so that one component can make use of the
 data/objects/results provided by another component.)
 
 Both the future we create and the `poll-data` atom are returned by the
@@ -135,14 +135,44 @@ nil
   {:poller #<Future@4243c35a: :pending>, :poll-data #<Atom@124804ba: 1>}}}
 ```
 
-Notice that the location of the instance corresponds to the location of a
-component's definition. `APIPollerComponent` lives in the system map under
-`[::ds/defs :services :api-poller]`, and its instance lives in the system map
-under `[::ds/instances :services :api-poller]`.
+Notice that the location of a component's instance in the system map corresponds
+to the location of a component's definition. The component definition
+`APIPollerComponent` lives in the system map under `[::ds/defs :services
+:api-poller]`, and its instance lives in the system map under `[::ds/instances
+:services :api-poller]`.
 
-This is donut.system's mechanism for holding on to the objects and values
-produced by a signal handler so that other signal handlers can interact with
-them.
+You can make use of this fact to retrieve or interact with a component's
+instance: if the component's definition is located in the system map under
+`[::ds/defs :web :worker-1]`, then its instance will be located under
+`[::ds/instances :web :worker-1]`.
+
+## Component organizational structure
+
+This organizational structure is a key aspect of donut.system's design: a system
+stores different facets of a component (its definition, its instance, and more)
+in the same relative location across different maps.
+
+Internally, donut.system's implementation relies on this structure to manage the
+way it conveys a component's instance to its signal handlers. Externally, this
+organization structure is meant to make it easier for developers like yourself
+to find information about a component.
+
+For example, there are many reasons why you might want to interact with a
+component's instance: you might want to inspect an instance in a running system
+to debug an issue, you might want to write assertions about the value of an
+instance in a test, etc. donut.system's organizational structure (hopefully)
+makes it obvious how to retrieve the instance you're interested in.
+
+If you need to get an instance, the library also includes the `ds/instance`
+function:
+
+``` clojure
+(ds/instance running-system [:services :api-poller])
+```
+
+In addition to being a bit clearer, using the `ds/instance` function has the
+advantage that it will throw an exception if the instance you're looking for
+isn't defined. This can help prevent typos.
 
 ## Accessing instances in signal handlers
 

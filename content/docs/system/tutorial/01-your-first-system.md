@@ -54,8 +54,8 @@ Conceptually, donut.system models system behavior in terms of sending and
 responding to signals. (This is metaphorical: there's no network or sockets or
 anything like that involved.) The system of components define _signal handlers_,
 and when you "send" a signal to a system it _applies_ the signal by traversing
-each component and calling its signal handler for that signal. This signal
-handlers are what actually "do stuff" in your application.
+each component and calling its signal handler for that signal. These signal
+handlers are what perform useful work in your application.
 
 This idea manifests in your code in the way components are defined. You define
 components as maps that associate signal names (like `::ds/start`) with signal
@@ -83,9 +83,9 @@ them to be found and used. The general structure is:
   {:component-3 component-def-map}}}
 ```
 
-The value of `::ds/defs` is map whose keys are group names, and and whose values
-are component groups. A component group is a map whose keys are component name,
-and whose values are component maps.
+The value of `::ds/defs` is a map whose keys are group names, and and whose
+values are component groups. A component group is a map whose keys are component
+names, and whose values are component maps.
 
 For a map to be treated as a component definition, it must be located at the
 correct place within these nested maps. It must be accessible via get-into using
