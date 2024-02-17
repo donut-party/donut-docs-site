@@ -140,8 +140,9 @@ component's definition. `APIPollerComponent` lives in the system map under
 `[::ds/defs :services :api-poller]`, and its instance lives in the system map
 under `[::ds/instances :services :api-poller]`.
 
-This donut.system's mechanism for holding on to the objects and values produced
-by a signal handler so that other signal handlers can interact with them.
+This is donut.system's mechanism for holding on to the objects and values
+produced by a signal handler so that other signal handlers can interact with
+them.
 
 ## Accessing instances in signal handlers
 
@@ -243,7 +244,7 @@ to _override_ these values:
 ``` clojure
 (def running-system
   (ds/start system
-            {[:services :api-poll ::ds/config] 1000}))
+            {[:services :api-poll ::ds/config :interval] 1000}))
 ```
 
 `ds/start` is a helper that sends the `::ds/start` signal to a system, and
@@ -252,7 +253,7 @@ path to a location under `::ds/defs` in your system map, and the value is the
 new value you want at that position. It's like you're doing this:
 
 ```clojure
-(assoc-in system [::ds/defs :services :api-poll ::ds/config] 1000)
+(assoc-in system [::ds/defs :services :api-poll ::ds/config :interval] 1000)
 ```
 
 except for every key/value pair found in the overrides map.
