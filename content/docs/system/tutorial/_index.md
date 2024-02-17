@@ -4,6 +4,8 @@ next: 01-your-first-system
 weight: 1
 ---
 
+[![Clojars Project](https://img.shields.io/clojars/v/party.donut/system.svg)](https://clojars.org/party.donut/system)
+
 This tutorial guides you through the basics of using donut.system to structure
 and interact with your application. By the end of it you'll be comfortable
 creating and using systems, component groups, components, signal handlers, and
@@ -56,6 +58,11 @@ references. You'll understand exactly what's going on in this example:
   [_]
   (ds/system :base {[:env] (env-config :prod)}))
 ```
+
+The tutorial assumes that you know basic Clojure, and that you have an
+understanding of [Clojure projects](https://www.braveclojure.com/appendix-a/)
+and how to add libraries to your dependencies. [See the donut.system Clojars
+page](https://clojars.org/party.donut/system) for specific dependency info.
 
 Let's go!
 
