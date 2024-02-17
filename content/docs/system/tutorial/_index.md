@@ -1,5 +1,5 @@
 ---
-title: donut.system Tutorial
+title: donut.system tutorial
 next: 01-your-first-system
 weight: 1
 ---
@@ -64,7 +64,12 @@ understanding of [Clojure projects](https://www.braveclojure.com/appendix-a/)
 and how to add libraries to your dependencies. [See the donut.system Clojars
 page](https://clojars.org/party.donut/system) for specific dependency info.
 
-Let's go!
+You can view all source for tutorial examples [on
+GitHub](https://github.com/donut-party/system/tree/main/dev/donut/examples/tutorial).
+You can run these examples from a REPL.
+
+
+OK enough jibber jabber! Let's go!
 
 * [01: Your First System](01-your-first-system)
 * [02: Implementing Behavior with Signal Handlers](02-implementing-behavior-with-signal-handlers)
