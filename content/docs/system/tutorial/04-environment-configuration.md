@@ -66,9 +66,9 @@ running in. Below is an example of how to handle this with donut.system:
 
 The strategy here is:
 
-1. Use another library, [aero](https://github.com/juxt/aero), to transorm config
-   files into Clojure data structures for your application. aero is EDN, but
-   with some enhancements, including a little syntax sugar for incorporating
+1. Use another library, [aero](https://github.com/juxt/aero), to transform
+   config files into Clojure data structures for your application. aero is EDN,
+   but with some enhancements, including a little syntax sugar for incorporating
    environment variables and for producing different values based on the
    `:profile` you pass in. `env-config` uses aero on line 8; see the aero docs
    for more info.

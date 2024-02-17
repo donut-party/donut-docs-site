@@ -70,7 +70,7 @@ components. Their names are `:api-poller` and `:data-store`.
 
 We haven't talked about component groups much, and that's because there's not
 much to them. On a conceptual level, we use the term _component group_ to refer
-a collection of components. On an implmentation level, a component group is just
+a collection of components. On an implementation level, a component group is just
 a map. You can name component groups whatever you want. I'm actually struggling
 to say more about them here because in a sense component groups aren't even
 really a thing; your system definition is just maps of maps, and the term
