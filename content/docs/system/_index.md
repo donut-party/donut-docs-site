@@ -94,7 +94,7 @@ groups. In this case, there's only one component group, `:app`. `:app` is an
 arbitrary name with no special significance; you can use whatever keywords you
 want for component group names.
 
-Under the `:app` component group we have a map of where each key is the name of
+Under the `:app` component group we have a map where each key is the name of
 the component and each value is the component's definition. A component
 definition specifies the component's behavior. In this example, the `:printer`
 component definition is a map that has two keys, `::ds/start` and `::ds/stop`.
@@ -188,7 +188,7 @@ The term _component_ has many senses across the abstract-to-concrete spectrum.
 You can use the word to refer to:
 
 * The abstract notion of a sub-system or module, a separate functioning part of
-  a whole
+  a whole, e.g. "components help you organize a system"
 * A particular sub-system with its abstract descriptions of processes, state,
   and responsibilities, e.g. "the data fetching component handles caching,
   concurrency, and batching for retrieving business data"
@@ -200,6 +200,12 @@ into concrete component definitions and instances. The organizing unit of the
 component helps you delineate what collections of processes and state share the
 same functional purpose, and to clearly express the dependencies among
 components.
+
+Component _definitions_ describe a component's behavior and dependencies.
+Behavior is modeled as _signal handling_: to define a component is to define
+the function it should call in response to a signal it's sent.
+
+Component _instances_ are whatever objects or values you need to interact with.
 
 #### Component Definitions
 
