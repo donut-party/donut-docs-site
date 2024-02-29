@@ -41,16 +41,21 @@ helps you manage this source of complexity. With it, you can:
   created. donut.system makes sure that these behaviors happen in the correct
   order.
 
+[Check out the tutorial]({{< ref "/docs/system/tutorial" >}}) for a resource
+that systematically builds your mental model of the library from scratch. The
+rest of this doc is organized as a mostly depth-first series of guides that
+explore every aspect of working with donut.system.
+
 ## Basic Usage
 
 ### Define and interact with a system
 
 To use donut.system, you first define a _system_ that contains _component
 groups_. Component groups contain _component definitions_. Component definitions
-include _signal handlers_ that specify component behaviors.
+include _signal handlers_ that implement component behaviors.
 
-Systems, component groups, and component definitions are just maps that are
-structured a particular way. Here's an example of a system definition:
+Systems, component groups, and component definitions are just maps that follow
+donut.system's organization scheme. Here's an example of a system definition:
 
 ``` clojure
 (ns donut.examples.single-component
@@ -94,7 +99,6 @@ the component and each value is the component's definition. A component
 definition specifies the component's behavior. In this example, the `:printer`
 component definition is a map that has two keys, `::ds/start` and `::ds/stop`.
 These keys are names of _signal handlers_, which you'll learn about momentarily.
-
 `::ds/start` and `::ds/stop` are both associated with a function. These
 functions are where you specify a component's behavior.
 
@@ -180,13 +184,28 @@ then use when stopping the system with `(ds/signal running-system :stop)`.
 
 ### Components
 
-Components have two manifestations: _definitions_ and _instances._
+The term _component_ has many senses across the abstract-to-concrete spectrum.
+You can use the word to refer to:
+
+* The abstract notion of a sub-system or module, a separate functioning part of
+  a whole
+* A particular sub-system with its abstract descriptions of processes, state,
+  and responsibilities, e.g. "the data fetching component handles caching,
+  concurrency, and batching for retrieving business data"
+* The definition of that component in code
+* A run-time instance of the component produced by its definition
+
+donut.system allows you to translate your system's architectural abstractions
+into concrete component definitions and instances. The organizing unit of the
+component helps you delineate what collections of processes and state share the
+same functional purpose, and to clearly express the dependencies among
+components.
 
 #### Component Definitions
 
 Component definitions (or just _defs_ for short) are maps that associate signal
-names with signal handlers. Signal names include `:donut.system/start`,
-`:donut.system/stop`, and more.
+names with signal handlers. Signal names are keywords, and built-in signals
+include `:donut.system/start`, `:donut.system/stop`, and more.
 
 Component defs are composed into systems by including them in component groups:
 
