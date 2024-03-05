@@ -41,14 +41,12 @@ helps you manage this source of complexity. With it, you can:
   created. donut.system makes sure that these behaviors happen in the correct
   order.
 
-[Check out the tutorial]({{< ref "/docs/system/tutorial" >}}) for a resource
-that systematically builds your mental model of the library from scratch. The
-rest of this doc is organized as a mostly depth-first series of guides that
-explore every aspect of working with donut.system.
+[The tutorial]({{< ref "/docs/system/tutorial" >}}) will help you systematically
+build your mental model of this tool. The rest of this doc is organized as a
+mostly depth-first series of guides that explore every aspect of working with
+donut.system.
 
-## Basic Usage
-
-### Define and interact with a system
+## Example usage: Define and interact with a system
 
 To use donut.system, you first define a _system_ that contains _component
 groups_. Component groups contain _component definitions_. Component definitions
@@ -181,6 +179,109 @@ on `[:services :stack]`, so `[:services :stack]` is started first.
 
 `ds/signal` returns an updated system map (bound to `running-system`) which you
 then use when stopping the system with `(ds/signal running-system :stop)`.
+
+## Basics
+
+Basics cover enough to get you comfortable using donut.system in real-world
+projects.
+
+### Philosophical Woes Preamble
+
+In putting together learning materials for this library I've struggled more than
+usual with actually defining what the hell I'm even trying to talk about. To
+adequately explain what donut.system does and how it functions, we need to
+define terms like _system_, _component_, and _signal_, but it turns out this is
+very challenging.
+
+It's challenging because each word is actually used to refer to a number of
+related-but-slightly-different things that span a spectrum from abstract to
+concrete. There are at least three different ways to complete the sentence "A
+component is a ___" depending on what part of the abstraction stack you're
+referring to:
+
+- A component is a collection of process and state organized around a particular
+  behavior
+- A component is an organizational unit in the donut.system library
+- A component is a map of signal handlers where they keys are signal names and
+  the values are the functions to call in response to signals
+
+This problem is inherent to any discussion of software tools, where the entire
+edifice is taped together with metaphors like "file", "pipe", "map", and so on.
+We start with these metaphors because they at least place us in the same city as
+the actual concept we're trying to describe, but it's still all too easy to get
+lost when trying to navigate from the metaphor to the thing itself.
+
+The problem is slightly exacerbated in Lisps and with Clojure in particular
+where we're trying to somehow graft a clearly-demarcated model onto
+general-purpose constructs like maps and functions. We don't have the luxury of
+creating a new class like a `ComponentFactoryFactory` every time we want to be
+damn sure that boundaries of our code match the ones in our head. So in the docs
+that follow you'll see a lot of explanations like "A system is a map, but when
+you call these API functions it behaves like a system, but it's still a map and
+you can do normal map stuff to it."
+
+On top of this, we're relying on _system_, _component_, and _signal_ because
+they are metaphors that give us the best starting point for understanding the
+code we need to write and the runtime behavior we can expect. At the same time,
+these words ratchet up the difficulty because they're already abstract; you
+can't visualize a "component" in the same way you can a "file" or "map." TL;DR:
+words are hard.
+
+Nevertheless, we persist, because what other choice do we have? As software
+engineers it's our job to somehow make stuff without knowing what the hell we're
+doing. If these docs turn out to be an incoherent mess, well it's not like
+that's the first time that's happened, and guess what: the world is still
+turning.
+
+### Conceptual Foundation
+
+One way to begin tackling this problem is to start with the problem we're trying
+to solve, then explain the model we're employing to make the problem tractable,
+and then show how this model is implemented.
+
+
+
+#### Metaphors
+
+#### Code abstractions
+
+#### Instances
+
+
+The challenge is compounded by the
+fact that we're grafting these metaphors onto Clojure maps and functions, which
+are general-purpose constructs which have their own specific nature that extends
+beyond how we're using them in this construct.
+
+### Systems
+
+The metaphors we impose on our code to keep it organized and understandable.
+Libraries, objects, etc.
+
+With Clojure, this is even more metaphorical because the emphasis is on simple
+data structures. When I say this map is a system, what does it really mean?
+
+``` clojure
+```
+
+We're starting with some kind of conceptual model, and we're trying to implement
+it in code. 
+
+However, the code constructs still retain all their properties: they're still
+maps.
+
+Conceptually, donut.system is akin to a service manager like systemd. Service
+managers
+
+- gives structure to the process of getting everything running that your
+  computer needs
+- captures common process / workflow
+
+
+Introduces an organizing structure for defining components and for responding to
+behavior
+
+Metaphor breaks down in that you don't typically use donut.system to handle...
 
 ### Components
 
