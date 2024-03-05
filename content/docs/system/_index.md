@@ -196,8 +196,8 @@ very challenging.
 It's challenging because each word is actually used to refer to a number of
 related-but-slightly-different things that span a spectrum from abstract to
 concrete. For example, there are at least three different ways to complete the
-sentence "A component is a ___" depending on what part of the abstraction stack
-you're referring to:
+sentence "A component is a ___" depending on what part of the abstraction
+spectrum you're referring to:
 
 - A component is a collection of process and state organized around a particular
   behavior
