@@ -233,25 +233,20 @@ doing. If these docs turn out to be an incoherent mess, well it's not like
 that's the first time that's happened, and guess what: the world is still
 turning.
 
-### Conceptual Foundation
+### Conceptual foundation
 
-One way to begin tackling this problem is to start with the problem we're trying
-to solve, then explain the model we're employing to make the problem tractable,
-and then show how this model is implemented.
+We're going to tackle this problem by starting with the problem we're trying to
+solve, then explaining the model we're employing to make the problem tractable,
+and then showing how this model is implemented.
 
+#### Problem: Architectural decomposition and composition
 
+- Function decomposition is not a problem
+- Way to delineate groups of related process and state for a higher-level purpose
 
-#### Metaphors
+#### Model: A system of components
 
-#### Code abstractions
-
-#### Instances
-
-
-The challenge is compounded by the
-fact that we're grafting these metaphors onto Clojure maps and functions, which
-are general-purpose constructs which have their own specific nature that extends
-beyond how we're using them in this construct.
+#### Implementation
 
 ### Systems
 
