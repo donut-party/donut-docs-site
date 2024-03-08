@@ -180,12 +180,7 @@ on `[:services :stack]`, so `[:services :stack]` is started first.
 `ds/signal` returns an updated system map (bound to `running-system`) which you
 then use when stopping the system with `(ds/signal running-system :stop)`.
 
-## Basics
-
-Basics cover enough to get you comfortable using donut.system in real-world
-projects.
-
-### Philosophical Woes Preamble
+## Philosophical Woes Preamble
 
 In putting together learning materials for this library I've struggled more than
 usual with actually defining what the hell I'm even trying to talk about. To
@@ -233,20 +228,40 @@ doing. If these docs turn out to be an incoherent mess, well it's not like
 that's the first time that's happened, and guess what: the world is still
 turning.
 
-### Conceptual foundation
-
 We're going to tackle this problem by starting with the problem we're trying to
 solve, then explaining the model we're employing to make the problem tractable,
 and then showing how this model is implemented.
 
-#### Problem: Architectural decomposition and composition
+### Problem: Mapping architecture to code
 
-- Function decomposition is not a problem
-- Way to delineate groups of related process and state for a higher-level purpose
+In Clojure, we don't have first-class constructs for mapping an abstract
+architecture to code. When we're dealing with an application at the architecture
+level, we speak in terms of services, modules, components, and other black-box
+abstractions, as well as the relationships among them. There's no obvious or
+consistent way to implement capture these constructs within the context of the
+whole architecture. Yes, there are multimethods and protocols, and these are
+powerful tools for abstracting interfaces, but capturing the relationships among
+components is outside their purview.
 
-#### Model: A system of components
+And it's totally possible to write applications without first-class
+architectural constructs! However, I want to be able to explicitly bring these
+concerns into code in a way that makes it easier accomplish the following tasks:
 
-#### Implementation
+- View a component dependency graph
+- Write schemas to validate component dependencies
+- Write and read docs for how the architecture is expressed in code
+- Create reusable collections of components that have complex combinations of
+  process and state
+- Create clear boundaries around different parts of my codebase
+
+### Model: A system of components
+
+### Implementation
+
+## Basics
+
+Basics cover enough to get you comfortable using donut.system in real-world
+projects.
 
 ### Systems
 
