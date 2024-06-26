@@ -240,16 +240,15 @@ architecture. Yes, there are multimethods and protocols, and these are powerful
 tools for abstracting interfaces, but capturing the relationships among
 components is outside their purview.
 
-And it's totally possible to write applications without first-class
-architectural constructs! However, I want to be able to explicitly bring these
-concerns into code in a way that makes it easier accomplish the following tasks:
+Having a well-defined, data-driven method for defining architectural constructs
+yields a host of benefits. If we get it right, we can:
 
 - View a component dependency graph
 - Write schemas to validate component dependencies
 - Write and read docs for how the architecture is expressed in code
 - Create reusable collections of components that have complex combinations of
   process and state
-- Create clear boundaries around different parts of my codebase
+- Create clear boundaries around different parts of a codebase
 
 ### Model: A system of components
 
