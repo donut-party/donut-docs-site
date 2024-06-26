@@ -180,15 +180,13 @@ on `[:services :stack]`, so `[:services :stack]` is started first.
 `ds/signal` returns an updated system map (bound to `running-system`) which you
 then use when stopping the system with `(ds/signal running-system :stop)`.
 
-## Philosophical Woes Preamble
+## Philosophical Woes Preamble (Optional)
 
-In putting together learning materials for this library I've struggled more than
-usual with actually defining what the hell I'm even trying to talk about. To
-adequately explain what donut.system does and how it functions, we need to
+To adequately explain what donut.system does and how it functions, we need to
 define terms like _system_, _component_, and _signal_, but it turns out this is
 very challenging.
 
-It's challenging because each word is actually used to refer to a number of
+It's challenging because each word is used to refer to a number of
 related-but-slightly-different things that span a spectrum from abstract to
 concrete. For example, there are at least three different ways to complete the
 sentence "A component is a ___" depending on what part of the abstraction
@@ -201,26 +199,25 @@ spectrum you're referring to:
   the values are the functions to call in response to signals
 
 This problem is inherent to any discussion of software tools, where the entire
-edifice is taped together with metaphors like "file", "pipe", "map", and so on.
-We start with these metaphors because they at least place us in the same city as
-the actual concept we're trying to describe, but it's still all too easy to get
-lost when trying to navigate from the metaphor to the thing itself.
+edifice is taped together with metaphors like "file", "pipe", and "map". These
+metaphors are like a child's sketch of the thing itself, bearing reasonable
+resemblance to concrete reality but failing to convey the subtler nuances of
+referent.
 
 The problem is slightly exacerbated in Lisps and with Clojure in particular
 where we're trying to somehow graft a clearly-demarcated model onto
 general-purpose constructs like maps and functions. We don't have the luxury of
-creating a new class like a `ComponentFactoryFactory` every time we want to be
-damn sure that boundaries of our code match the ones in our head. So in the docs
-that follow you'll see a lot of explanations like "A system is a map, but when
-you call these API functions it behaves like a system, but it's still a map and
-you can do normal map stuff to it."
+creating a new class like a `LocalDateTime` and `OffsetDateTime` every time we
+want to be sure the boundaries of our code match the ones in our head. So in
+the docs that follow you'll see a lot of explanations like "A system is a map,
+but when you call these API functions it behaves like a system, but it's still a
+map and you can do normal map stuff to it."
 
 On top of this, we're relying on _system_, _component_, and _signal_ because
 they are metaphors that give us the best starting point for understanding the
 code we need to write and the runtime behavior we can expect. At the same time,
 these words ratchet up the difficulty because they're already abstract; you
-can't visualize a "component" in the same way you can a "file" or "map." TL;DR:
-words are hard.
+can't visualize a "component" in the same way you can a "file" or "map."
 
 Nevertheless, we persist, because what other choice do we have? As software
 engineers it's our job to somehow make stuff without knowing what the hell we're
@@ -238,9 +235,9 @@ In Clojure, we don't have first-class constructs for mapping an abstract
 architecture to code. When we're dealing with an application at the architecture
 level, we speak in terms of services, modules, components, and other black-box
 abstractions, as well as the relationships among them. There's no obvious or
-consistent way to implement capture these constructs within the context of the
-whole architecture. Yes, there are multimethods and protocols, and these are
-powerful tools for abstracting interfaces, but capturing the relationships among
+consistent way to implement these constructs within the context of the whole
+architecture. Yes, there are multimethods and protocols, and these are powerful
+tools for abstracting interfaces, but capturing the relationships among
 components is outside their purview.
 
 And it's totally possible to write applications without first-class
