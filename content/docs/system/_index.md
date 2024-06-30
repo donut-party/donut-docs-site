@@ -180,7 +180,88 @@ on `[:services :stack]`, so `[:services :stack]` is started first.
 `ds/signal` returns an updated system map (bound to `running-system`) which you
 then use when stopping the system with `(ds/signal running-system :stop)`.
 
-## Philosophical Woes Preamble (Optional)
+## Conceptual Overveiw: Mapping architecture to code
+
+{{< callout type="info" >}}
+
+This section lays the conceptual foundation for following these docs and
+understanding how donut.system works. If you find it too abstract, skip to the
+[basics](#basics) section below or try [the tutorial]({{< ref
+"/docs/system/tutorial" >}})
+
+{{< /callout >}}
+
+When we're doing software development at the architecture level, we think and
+speak in terms of black-box abstractions like systems, services, modules, and
+components. We describe the responsibilities these pieces have and the
+relationships among them, e.g. _the system has three worker components which
+pull from a message queue component._
+
+```mermaid
+graph TD;
+    w1(worker 1)-->|pulls from|q(queue);
+    w2(worker 2)-->|pulls from|q;
+    w3(worker 3)-->|pulls from|q;
+```
+
+
+How would you write code to capture "my application has three worker components
+that pull from a queue"? If you application is small enough, you would likely
+just do it directly, possibly with something like this:
+
+```clojure
+(def worker-1 (make-worker worker-config))
+(def worker-2 (make-worker worker-config))
+(def worker-3 (make-worker worker-config))
+```
+
+And that's fine! If it works, it works. But over time, as your applications get
+larger and you write more of them, you'll find that you'll want to introduce
+some structure to handle common concerns when defining components, like
+validating their configurations, varying configuration across environment, and
+handling startup/shutdown behavior. You'll want to be able to jump into a
+colleague's project and reason about it at the component level, exploring what
+components are present, how they're related, and how they behave.
+
+In Clojure, there's no standard way to map architecture abstractions to code in
+a way that's immediately legible to other developers. "Component" isn't part of
+the language in the same way that constructs like vars, protocols, maps, and
+vectors are, and there's no recommended way to combine Clojure's built-in
+constructs to model architecture. 
+
+donut.system provides that model, giving you a consistent way to map the
+architectural abstractions you've designed to your code. If your system is
+indeed designed to have multiple workers pulling messages from a queue, you can
+define that in a way that's understandable by other devs who are familiar with
+donut.system. You can also make use of helper tools to visualize and document
+your system, making it easier to understand how everything fits together.
+
+And you might define components to capture this architecture like this:
+
+```clojure
+(def WorkerComponent
+  #::ds{:start (fn [{:keys [::ds/config]}]
+                 (start-worker config))
+        :config {:queue (ds/local-ref [:queue])}})
+
+#::ds{:defs
+      {:services
+       {:queue #::ds{:start (fn [{:keys [::ds/config]}]
+                              (create-queue config))
+                     :config {:uri "aws.sqs.etc"}}
+        :worker-1 WorkerComponent
+        :worker-2 WorkerComponent
+        :worker-3 WorkerComponent}}}
+```
+
+There's a lot 
+
+
+TODO "system" in the abstract sense as the outermost thing, the purpose for why this
+is being built, contains all the other pieces
+
+TODO "system" in code as the organizing structure the defines the relationships and
+coordinates them
 
 To adequately explain what donut.system does and how it functions, we need to
 define terms like _system_, _component_, and _signal_, but it turns out this is
@@ -219,22 +300,13 @@ code we need to write and the runtime behavior we can expect. At the same time,
 these words ratchet up the difficulty because they're already abstract; you
 can't visualize a "component" in the same way you can a "file" or "map."
 
-Nevertheless, we persist, because what other choice do we have? As software
-engineers it's our job to somehow make stuff without knowing what the hell we're
-doing. If these docs turn out to be an incoherent mess, well it's not like
-that's the first time that's happened, and guess what: the world is still
-turning.
-
 We're going to tackle this problem by starting with the problem we're trying to
 solve, then explaining the model we're employing to make the problem tractable,
 and then showing how this model is implemented.
 
 ### Problem: Mapping architecture to code
 
-In Clojure, we don't have first-class constructs for mapping an abstract
-architecture to code. When we're dealing with an application at the architecture
-level, we speak in terms of services, modules, components, and other black-box
-abstractions, as well as the relationships among them. There's no obvious or
+There's no obvious or
 consistent way to implement these constructs within the context of the whole
 architecture. Yes, there are multimethods and protocols, and these are powerful
 tools for abstracting interfaces, but capturing the relationships among
@@ -251,6 +323,14 @@ yields a host of benefits. If we get it right, we can:
 - Create clear boundaries around different parts of a codebase
 
 ### Model: A system of components
+
+- Component doesn't actually have to have behavior
+- A way for different parts to refer to each other
+- Graph of "pieces"
+- "Component" is very much a black box abstraction. It's more about the
+  mechanical behavior than about focusing on a certain category of things
+- Ways to parameterize components
+- You have to put values into the system
 
 ### Implementation
 
