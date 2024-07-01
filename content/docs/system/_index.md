@@ -180,7 +180,7 @@ on `[:services :stack]`, so `[:services :stack]` is started first.
 `ds/signal` returns an updated system map (bound to `running-system`) which you
 then use when stopping the system with `(ds/signal running-system :stop)`.
 
-## Conceptual Overveiw: Mapping architecture to code
+## Conceptual Overview: Mapping architecture to code
 
 {{< callout type="info" >}}
 
@@ -227,16 +227,20 @@ In Clojure, there's no standard way to map architecture abstractions to code in
 a way that's immediately legible to other developers. "Component" isn't part of
 the language in the same way that constructs like vars, protocols, maps, and
 vectors are, and there's no recommended way to combine Clojure's built-in
-constructs to model architecture. 
+constructs to model architecture.
 
-donut.system provides that model, giving you a consistent way to map the
-architectural abstractions you've designed to your code. If your system is
-indeed designed to have multiple workers pulling messages from a queue, you can
-define that in a way that's understandable by other devs who are familiar with
-donut.system. You can also make use of helper tools to visualize and document
-your system, making it easier to understand how everything fits together.
+donut.system provides that model, giving you a clearly-defined way to implement
+components and their relationships. The library handles all the concerns you run
+into when defining components, including document them, configuring them,
+validating them, and starting and stopping them. It also provides a
+slowly-growing suite of developer tools to explore and interact them, so that
+for example you can generate an interactive visual graph of a system to better
+understand how everything fits together.
 
-And you might define components to capture this architecture like this:
+[Example usage: Define and interact with a
+system](#example-usage-define-and-interact-with-a-system) shows example
+component definitions. This example shows how you might define a system that
+includes our queue and workers:
 
 ```clojure
 (def WorkerComponent
@@ -244,95 +248,71 @@ And you might define components to capture this architecture like this:
                  (start-worker config))
         :config {:queue (ds/local-ref [:queue])}})
 
-#::ds{:defs
-      {:services
-       {:queue #::ds{:start (fn [{:keys [::ds/config]}]
-                              (create-queue config))
-                     :config {:uri "aws.sqs.etc"}}
-        :worker-1 WorkerComponent
-        :worker-2 WorkerComponent
-        :worker-3 WorkerComponent}}}
+(def system
+  #::ds{:defs
+        {:services
+         {:queue #::ds{:start (fn [{:keys [::ds/config]}]
+                                (create-queue config))
+                       :config {:uri "aws.sqs.etc"}}
+          :worker-1 WorkerComponent
+          :worker-2 WorkerComponent
+          :worker-3 WorkerComponent}}})
 ```
 
-There's a lot 
+These docs will explain all this thoroughly, but for now the point is that the
+library provides constructs for defining and interacting with systems and
+components.
 
+### Terminology
 
-TODO "system" in the abstract sense as the outermost thing, the purpose for why this
-is being built, contains all the other pieces
+In mapping architecture to code, donut.system adopts the terms _system_ and
+_component_. These words are both hard to define precisely, but I think most
+developers have a rough shared sense of their meaning: systems are the black-box
+tools that users use to solve their problems, and components are the internal
+bundles of process and state that implement the desired functionality within the
+desired quality specifications. If you're building a web app, the system is the
+web app and worker and queue components help the web app operate with acceptable
+performance.
 
-TODO "system" in code as the organizing structure the defines the relationships and
-coordinates them
+Within the context of donut.system, the terms _system_ and _component_ can refer
+to a few related-but-slightly-different things that span a spectrum from
+abstract to concrete. For example, there are at least three different ways to
+complete the sentence "A component is a ___" depending on what part of the
+abstraction spectrum you're referring to:
 
-To adequately explain what donut.system does and how it functions, we need to
-define terms like _system_, _component_, and _signal_, but it turns out this is
-very challenging.
-
-It's challenging because each word is used to refer to a number of
-related-but-slightly-different things that span a spectrum from abstract to
-concrete. For example, there are at least three different ways to complete the
-sentence "A component is a ___" depending on what part of the abstraction
-spectrum you're referring to:
-
-- A component is a collection of process and state organized around a particular
-  behavior
+- A component is a collection of process and state organized around a behavior
 - A component is an organizational unit in the donut.system library
 - A component is a map of signal handlers where they keys are signal names and
   the values are the functions to call in response to signals
 
-This problem is inherent to any discussion of software tools, where the entire
-edifice is taped together with metaphors like "file", "pipe", and "map". These
-metaphors are like a child's sketch of the thing itself, bearing reasonable
-resemblance to concrete reality but failing to convey the subtler nuances of
-referent.
+Context should make it clear which sense of these terms is being used. However,
+the last usage -- "a component is a map of signal handlers" -- is potentially
+confusing.
 
-The problem is slightly exacerbated in Lisps and with Clojure in particular
-where we're trying to somehow graft a clearly-demarcated model onto
-general-purpose constructs like maps and functions. We don't have the luxury of
-creating a new class like a `LocalDateTime` and `OffsetDateTime` every time we
-want to be sure the boundaries of our code match the ones in our head. So in
-the docs that follow you'll see a lot of explanations like "A system is a map,
-but when you call these API functions it behaves like a system, but it's still a
-map and you can do normal map stuff to it."
+It's more precise to say "a component _definition_ is a map of signal handlers".
+donut.system does not provide any types or protocols for defining components.
+Rather, every time the `donut.system/signal` function encounters a map with a
+specific structure (the keys are signal names), it treats that map as a
+component definition.
 
-On top of this, we're relying on _system_, _component_, and _signal_ because
-they are metaphors that give us the best starting point for understanding the
-code we need to write and the runtime behavior we can expect. At the same time,
-these words ratchet up the difficulty because they're already abstract; you
-can't visualize a "component" in the same way you can a "file" or "map."
+By following this line of reasoning, the `WorkerComponent` var above could more
+accurately have been named `WorkerComponentDefinition`. But that feels feels
+unwieldy, and `WorkerComponent` is clear enough.
 
-We're going to tackle this problem by starting with the problem we're trying to
-solve, then explaining the model we're employing to make the problem tractable,
-and then showing how this model is implemented.
+At the risk of getting too philosophical, components themselves don't actually
+exist in your code base or in your running program in a first-class way in the
+same way that functions and vars exist; rather, components manifest as
+_definitions_ and _instances_. Hopefully this explanation isn't creating more
+confusion!
 
-### Problem: Mapping architecture to code
+## Implementation
 
-There's no obvious or
-consistent way to implement these constructs within the context of the whole
-architecture. Yes, there are multimethods and protocols, and these are powerful
-tools for abstracting interfaces, but capturing the relationships among
-components is outside their purview.
+donut.system is just some functions that work on maps that are structured a
+certain way. Let's look at this purely from the behavarioral, mechanical level,
+stripped of any "component" or "system" meaning, then layer on those semantic
+notions.
 
-Having a well-defined, data-driven method for defining architectural constructs
-yields a host of benefits. If we get it right, we can:
 
-- View a component dependency graph
-- Write schemas to validate component dependencies
-- Write and read docs for how the architecture is expressed in code
-- Create reusable collections of components that have complex combinations of
-  process and state
-- Create clear boundaries around different parts of a codebase
-
-### Model: A system of components
-
-- Component doesn't actually have to have behavior
-- A way for different parts to refer to each other
-- Graph of "pieces"
-- "Component" is very much a black box abstraction. It's more about the
-  mechanical behavior than about focusing on a certain category of things
-- Ways to parameterize components
-- You have to put values into the system
-
-### Implementation
 
 ## Basics
 
