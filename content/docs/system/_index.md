@@ -403,12 +403,11 @@ Here's what now happens when you call `ds/signal`:
    replaced with the referenced value, `"world"`
 5. The function at `[::ds/defs :group-a :component-b ::ds/start]` gets called,
    and it gets passed one argument. This argument includes the map found at
-   `[::ds/defs :group-a :component-b]`, which is a map that now includes the
-   key/value pair `{::ds/config {:who "world"}}`. The function being called
-   pulls this value out and uses it to pritn `hello, world`.
+   `[::ds/defs :group-a :component-b]`, which now includes `{::ds/config {:who
+   "world"}}`. The function being called pulls this value out and uses it to
+   print `hello, world`.
 
-`ds/signal` continues this process until the `::ds/defs` has been fully
-processed.
+`ds/signal` continues this process until `::ds/defs` has been fully processed.
 
 This is the core workflow that `ds/signal` executes when you evaluate it. The
 rest of the docs layer in the "component" and "system" concepts and cover
