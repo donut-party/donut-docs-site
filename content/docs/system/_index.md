@@ -460,36 +460,6 @@ as keys) and organizing them into a system.
 Basics cover enough to get you comfortable using donut.system in real-world
 projects.
 
-### Systems
-
-The metaphors we impose on our code to keep it organized and understandable.
-Libraries, objects, etc.
-
-With Clojure, this is even more metaphorical because the emphasis is on simple
-data structures. When I say this map is a system, what does it really mean?
-
-``` clojure
-```
-
-We're starting with some kind of conceptual model, and we're trying to implement
-it in code. 
-
-However, the code constructs still retain all their properties: they're still
-maps.
-
-Conceptually, donut.system is akin to a service manager like systemd. Service
-managers
-
-- gives structure to the process of getting everything running that your
-  computer needs
-- captures common process / workflow
-
-
-Introduces an organizing structure for defining components and for responding to
-behavior
-
-Metaphor breaks down in that you don't typically use donut.system to handle...
-
 ### Components
 
 The term _component_ has many senses across the abstract-to-concrete spectrum.
@@ -740,11 +710,12 @@ ref. Something like this wont' work:
 It won't work because `ds/ref` resides inside a function definition that
 isn't reachable by `(get-in system [:app :printer ::ds/start])`.
 
-### Constant instances
+### System data
 
 If a component is defined using any value other than a map that contains the
-`:donut.system/start` key, that value is considered to be the component's
-instance. This can be useful for configuration. Consider this system:
+`:donut.system/start` key, that value is considered _system data_ which can be
+referenced using refs. This can be useful for configuration. Consider this
+system:
 
 ``` clojure
 (ns donut.examples.ring
