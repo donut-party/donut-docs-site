@@ -271,7 +271,7 @@ value from `::ds/instances`. For example:
          :component-b
          #::ds{:start (fn [{:keys [::ds/config]}]
                         (println (str "hello, " (:who config) "!")))
-               :config {:who [::ds/ref [:group-a :component-a]])}}}}}
+               :config {:who [::ds/ref [:group-a :component-a]]}}}}}
  ::ds/start)
 ```
 
@@ -295,11 +295,43 @@ Here's what now happens when you call `ds/signal`:
    print `hello, world`.
 
 `ds/signal` continues this process until `::ds/defs` has been fully processed.
+This is the core workflow that `ds/signal` executes when you evaluate it.
 
-This is the core workflow that `ds/signal` executes when you evaluate it. The
-rest of the docs layer in the "component" and "system" concepts and cover
-important nuances of working with the library; hopefully these conceptual and
-concrete views will give you a good foundation!
+#### System data
+
+The `::ds/defs` map can contain arbitrary data for components to reference:
+
+```clojure
+(ds/signal
+ #::ds{:defs
+       {:env {:who "world"}
+        :group-a
+        {:component-b
+         #::ds{:start (fn [{:keys [::ds/config]}]
+                        (println (str "hello, " (:who config) "!")))
+               :config {:who [::ds/ref [:env :who]]}}}}}
+ ::ds/start)
+ ```
+
+This is very similar to the previous example. The difference is that there's now
+a path `[:env :who]` under `::ds/defs`, with the value of `"world"`, and the
+reference has been updated to point to this new location.
+
+When you call `ds/signal`, traverses the map under `::ds/defs`. It treats maps
+that have the `::ds/start` key in a special manner, calling the function that
+the `::ds/start` is paired. Everything else it finds gets placed in the
+corresponding location under `::ds/instances`. So, it finds `"world"` under
+`[::ds/defs :env :who]` and places that under `[::ds/instances :env who]`.
+`ds/signal` sees the reference `[::ds/ref [:env :who]]` and replaces it with the
+instance value, just like in the last section.
+
+#### It's just maps
+
+One cool thing to note is that defining your system and component definitions as
+just a nested map means that it's trivial to swap out parts of your system: all
+you have to do is use `assoc-in` or some other standard function to transform
+the system map. donut.system also provides some helpers for redefining
+components.
 
 ### Mapping architecture to code
 
@@ -379,10 +411,10 @@ These docs will explain all this thoroughly, but for now the point is that the
 library provides constructs for defining and interacting with systems and
 components.
 
-### Terminology
+#### Terminology
 
 In mapping architecture to code, donut.system adopts the terms _system_ and
-_component_. These words are both hard to define precisely, but I think most
+_component_. Both these words are hard to define precisely, but I think most
 developers have a rough shared sense of their meaning: systems are the black-box
 tools that users use to solve their problems, and components are the internal
 bundles of process and state that implement the desired functionality within the
@@ -408,12 +440,20 @@ confusing.
 It's more precise to say "a component _definition_ is a map of signal handlers".
 donut.system does not provide any types or protocols for defining components.
 Rather, every time the `donut.system/signal` function encounters a map with a
-specific structure (the keys are signal names), it treats that map as a
+specific structure (the keys are signal names and the map is found nested under
+`[::ds/defs component-group-name component-name]`), it treats that map as a
 component definition.
 
 By following this line of reasoning, the `WorkerComponent` var above could more
 accurately have been named `WorkerComponentDefinition`. But that feels feels
 unwieldy, and `WorkerComponent` is clear enough.
+
+### Summary
+
+donut.system is designed to let you map your architecture to code in a
+consistent and reusable way. It does this by providing the `ds/signal` function,
+along with a standard structure for defining components (maps with signal names
+as keys) and organizing them into a system.
 
 ## Basics
 
