@@ -180,16 +180,132 @@ on `[:services :stack]`, so `[:services :stack]` is started first.
 `ds/signal` returns an updated system map (bound to `running-system`) which you
 then use when stopping the system with `(ds/signal running-system :stop)`.
 
-## Conceptual Overview: Mapping architecture to code
+## Foundations
 
-{{< callout type="info" >}}
+The next couple sections help you fill out your mental model for using
+donut.system, both from the concrete, step-by-step behavioral perspective of
+what happens when you call the `donut.system/signal` function, and from the
+high-level perspective of how the library's designed to help implement your
+system's architecture.
 
-This section lays the conceptual foundation for following these docs and
-understanding how donut.system works. If you find it too abstract, skip to the
-[basics](#basics) section below or try [the tutorial]({{< ref
-"/docs/system/tutorial" >}})
+### What happens when you call `donut.system/signal`
 
-{{< /callout >}}
+The main function you'll use is `donut.system/signal` (we'll also use
+`ds/signal`), and it's possible to understand its behavior just in terms of
+everyday Clojure functions and data structures, without any reference to the
+"system" and "component" concepts the library layers on top.
+
+#### `ds/signal` calls functions that correspond to a keyword
+
+`ds/signal` takes two arguments, a map and a keyword. The map is expected to
+have the key `::ds/defs` with a nested map for a vlue. The keyword is expected
+to be `::ds/start`, `::ds/stop`, or a few others.
+
+When you call `ds/signal`, it traverses the _values in second level_ of the
+`::ds/defs` map for any keys that match the keyword passed to `ds/signal`. For
+example, if you evaluate this:
+
+```clojure
+(ds/signal
+ #::ds{:defs
+       {:group-a
+        {:component-a
+         #::ds{:start (fn [_] (println "this gets called!"))
+               :stop  (fn [_] (println "this doesn't get called"))}
+
+         :component-b
+         #::ds{:start (fn [_] (println "this also gets called!"))
+               :stop  (fn [_] (println "this also doesn't get called"))}}}}
+ ::ds/start)
+```
+
+then these two lines will get printed:
+
+```
+this gets called!
+this also gets called!
+```
+
+The _first_ level of the `::ds/defs` map contains the key `:group-a`. The
+_second_ level of the map includes the value for `:group-a`, which is a map that
+has the keys `:component-a` and `:component-b`. `ds/signal` looks at the values
+at this level for any maps that contain the key `::ds/start`, and if the value
+of `::ds/start` is a function then `ds/signal` calls that function.
+
+#### How `ds/signal` handles references
+
+As `ds/signal` traverses `::ds/defs` and calls functions, it keeps track of the
+return values of those functions under the `::ds/instances` key. You can see
+this by looking at `ds/signal`'s return value:
+
+```clojure
+(-> (ds/signal
+     #::ds{:defs
+           {:group-a
+            {:component-a
+             #::ds{:start (fn [_] "world")}}}}
+     ::ds/start)
+    (select-keys #{::ds/defs ::ds/instances}))
+   
+#::ds{:instances {:group-a {:component-a "world"}}
+      :defs      {:group-a {:component-a #::ds{:start (fn [_] "world")}}}}
+```
+
+In this case, there's only one instance of a map that includes a `::ds/start`
+function. The function returns the string `"world"`, and that gets stored under
+`::ds/instances` in a "location" that corresponds with the location of the
+function that produced the value: `[:group-a :component-a]`.
+
+`ds/signal` keeps track of these values so you can pass them into other
+functions by adding _references_ to them. References are vectors of the form
+`[::ds/ref location]`, where `location` is a vector used by `get-in` to get a
+value from `::ds/instances`. For example:
+
+```clojure
+(ds/signal
+ #::ds{:defs
+       {:group-a
+        {:component-a
+         #::ds{:start (fn [_] "world")}
+
+         :component-b
+         #::ds{:start (fn [{:keys [::ds/config]}]
+                        (println (str "hello, " (:who config) "!")))
+               :config {:who [::ds/ref [:group-a :component-a]])}}}}}
+ ::ds/start)
+```
+
+The second-to-last line has the reference `[::ds/ref [:group-a :component-a]]`.
+Here's what now happens when you call `ds/signal`:
+
+1. `ds/signal` "sees" `[::ds/ref [:group-a :component-b]]`. It structures the
+   order of `::ds/start` function calls so that the function defined at
+   `[::ds/defs :group-a :component-a ::ds/start]` gets called before the one at
+   `[::ds/defs :group-a :component-b ::ds/start]`.
+2. The function at `[:group-a :component-a ::ds/start]` gets called. It returns
+   the value `"world"`
+3. This value gets stored under `[::ds/instances :group-a :component-a]`
+4. The value at `[::ds/defs :group-a :component-b ::ds/config :who]` gets
+   replaced. It was initially `[::ds/ref [:group-a :component-a]]`, but it gets
+   replaced with the referenced value, `"world"`
+5. The function at `[::ds/defs :group-a :component-b ::ds/start]` gets called,
+   and it gets passed one argument. This argument includes the map found at
+   `[::ds/defs :group-a :component-b]`, which now includes `{::ds/config {:who
+   "world"}}`. The function being called pulls this value out and uses it to
+   print `hello, world`.
+
+`ds/signal` continues this process until `::ds/defs` has been fully processed.
+
+This is the core workflow that `ds/signal` executes when you evaluate it. The
+rest of the docs layer in the "component" and "system" concepts and cover
+important nuances of working with the library; hopefully these conceptual and
+concrete views will give you a good foundation!
+
+### Mapping architecture to code
+
+The previous section covered _what_ `ds/signal` does and the data structures it
+expects. This section will help you _why_ you would want to use it in the first
+place.
 
 When we're doing software development at the architecture level, we think and
 speak in terms of black-box abstractions like systems, services, modules, and
@@ -231,7 +347,7 @@ constructs to model architecture.
 
 donut.system provides that model, giving you a clearly-defined way to implement
 components and their relationships. The library handles all the concerns you run
-into when defining components, including document them, configuring them,
+into when defining components, including documenting them, configuring them,
 validating them, and starting and stopping them. It also provides a
 slowly-growing suite of developer tools to explore and interact them, so that
 for example you can generate an interactive visual graph of a system to better
@@ -298,121 +414,6 @@ component definition.
 By following this line of reasoning, the `WorkerComponent` var above could more
 accurately have been named `WorkerComponentDefinition`. But that feels feels
 unwieldy, and `WorkerComponent` is clear enough.
-
-## What happens when you call `donut.system/signal`
-
-We've looked at donut.system from the high-level conceptual perspective, and now
-we'll look at it from the low-level function call perspective. The main function
-you'll use is `donut.system/signal` (we'll also use `ds/signal`), and it's
-possible to understand its behavior just in terms of everyday Clojure functions
-and data structures, without any reference to the "system" and "component"
-concepts the library layers on top.
-
-### `ds/signal` calls functions that correspond to a keyword
-
-`ds/signal` takes two arguments, a map and a keyword. The map is expected to
-have the key `::ds/defs` with a nested map for a vlue. The keyword is expected
-to be `::ds/start`, `::ds/stop`, or a few others.
-
-When you call `ds/signal`, it traverses the _values in second level_ of the
-`::ds/defs` map for any keys that match the keyword passed to `ds/signal`. For
-example, if you evaluate this:
-
-```clojure
-(ds/signal
- #::ds{:defs
-       {:group-a
-        {:component-a
-         #::ds{:start (fn [_] (println "this gets called!"))
-               :stop  (fn [_] (println "this doesn't get called"))}
-
-         :component-b
-         #::ds{:start (fn [_] (println "this also gets called!"))
-               :stop  (fn [_] (println "this also doesn't get called"))}}}}
- ::ds/start)
-```
-
-then these two lines will get printed:
-
-```
-this gets called!
-this also gets called!
-```
-
-The _first_ level of the `::ds/defs` map contains the key `:group-a`. The
-_second_ level of the map includes the value for `:group-a`, which is a map that
-has the keys `:component-a` and `:component-b`. `ds/signal` looks at the values
-at this level for any maps that contain the key `::ds/start`, and if the value
-of `::ds/start` is a function then `ds/signal` calls that function.
-
-### Referencing values
-
-As `ds/signal` traverses `::ds/defs` and calls functions, it keeps track of the
-return values of those functions under the `::ds/instances` key. You can see
-this by looking at `ds/signal`'s return value:
-
-```clojure
-(-> (ds/signal
-     #::ds{:defs
-           {:group-a
-            {:component-a
-             #::ds{:start (fn [_] "world")}}}}
-     ::ds/start)
-    (select-keys #{::ds/defs ::ds/instances}))
-   
-#::ds{:instances {:group-a {:component-a "world"}}
-      :defs      {:group-a {:component-a #::ds{:start (fn [_] "world")}}}}
-```
-
-In this case, there's only one instance of a map that includes a `::ds/start`
-function. The function returns the string `"world"`, and that gets stored under
-`::ds/instances` in a "location" that corresponds with the location of the
-function that produced the value.
-
-`ds/signal` keeps track of these values so you can pass these return values into
-other functions by adding _references_ to them. References are vectors of the
-form `[::ds/ref location]`, where `location` is a vector used by `get-in` to get
-a value from `::ds/instances`. For example:
-
-```clojure
-(ds/signal
- #::ds{:defs
-       {:group-a
-        {:component-a
-         #::ds{:start (fn [_] "world")}
-
-         :component-b
-         #::ds{:start (fn [{:keys [::ds/config]}]
-                        (println (str "hello, " (:who config) "!")))
-               :config {:who [::ds/ref [:group-a :component-a]])}}}}}
- ::ds/start)
-```
-
-The second-to-last line has the reference `[::ds/ref [:group-a :component-a]]`.
-Here's what now happens when you call `ds/signal`:
-
-1. `ds/signal` "sees" `[::ds/ref [:group-a :component-b]]`. It structures the
-   order of `::ds/start` function calls so that the function defined at
-   `[::ds/defs :group-a :component-a ::ds/start]` gets called before the one at
-   `[::ds/defs :group-a :component-b ::ds/start]`.
-2. The function at `[:group-a :component-a ::ds/start]` gets called. It returns
-   the value `"world"`
-3. This value gets stored under `[::ds/instances :group-a :component-a]`
-4. The value at `[::ds/defs :group-a :component-b ::ds/config :who]` gets
-   replaced. It was initially `[::ds/ref [:group-a :component-a]]`, but it gets
-   replaced with the referenced value, `"world"`
-5. The function at `[::ds/defs :group-a :component-b ::ds/start]` gets called,
-   and it gets passed one argument. This argument includes the map found at
-   `[::ds/defs :group-a :component-b]`, which now includes `{::ds/config {:who
-   "world"}}`. The function being called pulls this value out and uses it to
-   print `hello, world`.
-
-`ds/signal` continues this process until `::ds/defs` has been fully processed.
-
-This is the core workflow that `ds/signal` executes when you evaluate it. The
-rest of the docs layer in the "component" and "system" concepts and cover
-important nuances of working with the library; hopefully these conceptual and
-concrete views will give you a good foundation!
 
 ## Basics
 
