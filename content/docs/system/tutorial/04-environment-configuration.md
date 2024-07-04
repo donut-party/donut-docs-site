@@ -83,17 +83,17 @@ The strategy here is:
   
 To fully understand this strategy, we need to understand:
   
-* Constant instances
+* System data
 * Deep refs
 * Named systems
 
-## Constant instances
+## System data
 
 If a component definition is anything other than a map that includes signal
-handler keys, then it's treated as a "constant instance." Observe:
+handler keys, then it's treated as _ssytem data_. Observe:
 
 ``` clojure
-(ns donut.examples.tutorial.04-constant-instance
+(ns donut.examples.tutorial.04-system-data
   (:require
    [donut.system :as ds]))
 
@@ -218,7 +218,7 @@ donut.system in a real project! Woo!
 ## Summary
 
 * Any component definition that isn't a map of signal handlers is treated as a
-  _constant instance_
+  _system data_
 * You can use `ds/named-system` to register different system definitions
 * Refs can actually refer to any part of a system's `::ds/instances` that's
   reachable via `get-in`
