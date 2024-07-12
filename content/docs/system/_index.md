@@ -190,18 +190,18 @@ system's architecture.
 
 ### What happens when you call `donut.system/signal`
 
-The main function you'll use is `donut.system/signal` (we'll also use
-`ds/signal`), and it's possible to understand its behavior just in terms of
-everyday Clojure functions and data structures, without any reference to the
-"system" and "component" concepts the library layers on top.
+The main function you'll use is `donut.system/signal` (aliased to `ds/signal`),
+and it's possible to understand its behavior in terms of everyday Clojure
+functions and data structures, without any reference to the "system" and
+"component" concepts the library layers on top.
 
 #### `ds/signal` calls functions that correspond to a keyword
 
 `ds/signal` takes two arguments, a map and a keyword. The map is expected to
-have the key `::ds/defs` with a nested map for a vlue. The keyword is expected
+have the key `::ds/defs` with a nested map for a value. The keyword is expected
 to be `::ds/start`, `::ds/stop`, or a few others.
 
-When you call `ds/signal`, it traverses the _values in second level_ of the
+When you call `ds/signal`, it traverses the _values in the second level_ of the
 `::ds/defs` map for any keys that match the keyword passed to `ds/signal`. For
 example, if you evaluate this:
 
@@ -235,8 +235,8 @@ of `::ds/start` is a function then `ds/signal` calls that function.
 #### How `ds/signal` handles references
 
 As `ds/signal` traverses `::ds/defs` and calls functions, it keeps track of the
-return values of those functions under the `::ds/instances` key. You can see
-this by looking at `ds/signal`'s return value:
+return values of those functions under the system map's `::ds/instances` key.
+You can see this by looking at `ds/signal`'s return value:
 
 ```clojure
 (-> (ds/signal
@@ -278,7 +278,7 @@ value from `::ds/instances`. For example:
 The second-to-last line has the reference `[::ds/ref [:group-a :component-a]]`.
 Here's what now happens when you call `ds/signal`:
 
-1. `ds/signal` "sees" `[::ds/ref [:group-a :component-b]]`. It structures the
+1. `ds/signal` "sees" `[::ds/ref [:group-a :component-a]]`. It structures the
    order of `::ds/start` function calls so that the function defined at
    `[::ds/defs :group-a :component-a ::ds/start]` gets called before the one at
    `[::ds/defs :group-a :component-b ::ds/start]`.
@@ -296,6 +296,32 @@ Here's what now happens when you call `ds/signal`:
 
 `ds/signal` continues this process until `::ds/defs` has been fully processed.
 This is the core workflow that `ds/signal` executes when you evaluate it.
+
+#### Component instances get passed in to signal handlers
+
+Component instances are included in the map that gets passed to signal handlers
+under the `::ds/instance` key. This lets you do things like stop a web server
+that you started or perform other stateful operations. Here's a toy example:
+
+```
+(let [started-system (ds/signal
+                      #::ds{:defs
+                            {:group-a
+                             {:component-a
+                              #::ds{:start (fn [_] "world")
+                                    :stop  (fn [{:keys [::ds/instance]}] (println "Goodbye," instance))}}}}
+                      ::ds/start)]
+  (ds/signal started-system ::ds/stop))
+```
+
+The first call to `ds/signal` returns an updated system map that contains the
+string `"world"` at the location `[::ds/instances :group-a :component-a]`. This
+value gets passed to the `::ds/stop` function when you call `ds/signal` a second
+time, and the result is a message gets printed. (I am now realizing that the
+message is somewhat depressing.)
+
+(BTW I know I said I wouldn't use the terms "compoonent" and "signal" in this
+section but I couldn't figure out how to explain this otherwise.)
 
 #### System data
 
@@ -317,10 +343,10 @@ This is very similar to the previous example. The difference is that there's now
 a path `[:env :who]` under `::ds/defs`, with the value of `"world"`, and the
 reference has been updated to point to this new location.
 
-When you call `ds/signal`, traverses the map under `::ds/defs`. It treats maps
-that have the `::ds/start` key in a special manner, calling the function that
-the `::ds/start` is paired. Everything else it finds gets placed in the
-corresponding location under `::ds/instances`. So, it finds `"world"` under
+When you call `ds/signal`, it traverses the map under `::ds/defs`. It treats
+maps that have the `::ds/start` key in a special manner, calling the function
+that the `::ds/start` is paired with. Everything else it finds gets placed in
+the corresponding location under `::ds/instances`. So, it finds `"world"` under
 `[::ds/defs :env :who]` and places that under `[::ds/instances :env who]`.
 `ds/signal` sees the reference `[::ds/ref [:env :who]]` and replaces it with the
 instance value, just like in the last section.
@@ -330,14 +356,13 @@ instance value, just like in the last section.
 One cool thing to note is that defining your system and component definitions as
 just a nested map means that it's trivial to swap out parts of your system: all
 you have to do is use `assoc-in` or some other standard function to transform
-the system map. donut.system also provides some helpers for redefining
-components.
+the system map.
 
 ### Mapping architecture to code
 
 The previous section covered _what_ `ds/signal` does and the data structures it
-expects. This section will help you _why_ you would want to use it in the first
-place.
+expects. This section will help you understand _why_ you would want to use it in
+the first place.
 
 When we're doing software development at the architecture level, we think and
 speak in terms of black-box abstractions like systems, services, modules, and
@@ -790,8 +815,8 @@ need to add a little configuration to your system:
                  :your.app/validate {:order :reverse-topsort}}})
 ```
 
-`::ds/signals` is a map where keys are signal names and values are configuration
-maps. The configuration keys are:
+**`::ds/signals`** is a map where keys are signal names and values are
+configuration maps. The configuration keys are:
 
 **`:order`** values can be `:topsort` or `:reverse-topsort`. This specifies the
 order that components' signal handlers should be called. `:topsort` means that
