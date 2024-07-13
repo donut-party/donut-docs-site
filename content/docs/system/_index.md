@@ -1499,23 +1499,31 @@ If you want to remove the component selection, you can either `dissoc` the key
 `::ds/selected-components` from your system map or call `select-components` with
 nil: `(ds/select-components system nil)`
 
-### Pre, post, validation, and "channels"
+### `pre-` and `post-` lifecycle handlers
 
 You can define `pre-` and `post-` handlers for signals:
 
 ``` clojure
 (def system
   {::ds/defs
-   {:app {:server #::ds{:pre-start (fn [_] (prn "pre-start"))
-                        :start        (fn [_] (prn "start"))
-                        :post-start  (fn [_] (prn "post-start"))}}}})
+   {:app {:server #::ds{:pre-start  (fn [_] (prn "pre-start"))
+                        :start      (fn [_] (prn "start"))
+                        :post-start (fn [_] (prn "post-start"))}}}})
 ```
 
-You can use these _lifecycle handlers_ to gather information about your system
-as it handles signals, and to perform validation. Let's look at a couple use
-cases: printing signal progress and validating configs.
+These handlers are applied in order for a given signal. If you sent `::ds/start`
+to the system above, it would print the following:
 
-Here's how you might print signal progress:
+``` clojure
+(ds/start system)
+pre-start
+start
+post-start
+```
+
+This is mildly useful in and of itself: you can make use of these lifecycle
+handlers to log component activity for debugging, for example. Here's how you
+might print signal progress:
 
 ``` clojure
 (defn print-progress
@@ -1524,9 +1532,9 @@ Here's how you might print signal progress:
 
 (def system
   {::ds/defs
-   {:group {:component-a #::ds{:start       "component a"
+   {:group {:component-a #::ds{:start      "component a"
                                :post-start print-progress}
-            :component-b #::ds{:start       "component b"
+            :component-b #::ds{:start      "component b"
                                :post-start print-progress}}}})
 
 (ds/signal system ::ds/start)
@@ -1543,100 +1551,34 @@ That's right: signal handlers are passed the entire system under the
 `::ds/system` key of their argument. The current component's id gets assoc'd
 into the system map under `::ds/component-id` prior to calling a signal handler.
 
-The handler argument also has a collection of "channel" functions merged into it
-which we can use to gather information about components and perform validation.
-Look at how we destructure `->info` and `->validation` from the third argument
-in these `:post-start` handlers:
+Lifecycle handlers make it possible to do more interesting things like time
+signal application and validate component configs and instances. These are
+covered in more detail in other sections.
+
+Lifecycle handlers differ from signal handlers in one key way: they can take a
+map of keywords to handlers, like this:
 
 ``` clojure
-(def system
-  {::ds/defs
-   {:group {:component-a #::ds{:start       "component a"
-                               :post-start (fn [{:keys [->info]}]
-                                              (->info "component a is valid"))}
-            :component-b #::ds{:start       "component b"
-                               :post-start (fn [{:keys [->validation]}]
-                                              (->validation "component b is invalid"))
-                               ;; This `:config` is only here to create the
-                               ;; dependency order for demonstration purpose
-                               :config      {:ref (ds/ref :component-a)}}
-            :component-c #::ds{:start       "component-c"
-                               :post-start (fn [_]
-                                              (prn "this won't print"))
-                               ;; This `:config` is only here to create the
-                               ;; dependency order for demonstration purpose
-                               :config      {:ref (ds/ref :component-b)}}}}})
-
-
-(::ds/out (ds/signal system ::ds/start))
-;; =>
-{:info       {:group {:component-a "component a is valid"}},
- :validation {:group {:component-b "component b is invalid"}}}
-```
-
-Notice that `:component-c`'s `:post-start` handler doesn't get called. As it
-predicts, the string "this won't print" doesn't get printed.
-
-It's not obvious what's going on here, so let's step through it.
-
-1. `:component-a`'s `:post-start` gets called first. It destructures the
-   `->info` function out of the third argument. `->info` is a _channel function_
-   and its purpose is to allow signal handlers to place a value somewhere in the
-   system map in a convenient and consistent way. `->info` assoc'd into the
-   system map before a signal handler is called, and it closes is over the
-   "output path", which includes the current component id. This is why when you
-   call `(->info "component a is valid")`, the string `"component a is valid"`
-   ends up at the path `[::ds/out :info :group :component-a]`.
-2. `(->info "component a is valid")` returns a system map, and that updated
-   system map is conveyed forward to other components' signal handlers, until a
-   final system map is returned by `ds/signal`.
-   
-   But what if you want to use `:post-start` to perform a side effect? What
-   then?? Do these functions always have to return a system map?
-   
-   No. The rules for handling return values are:
-   
-   1. If a system map is returned, convey that forward
-   2. Otherwise, check whether the signal handler is flagged as returning an
-      instance. This is configured under `[::ds/signals :signal-name
-      :returns-instance?]`. If that value is true, use the return value to
-      update the instance value.
-   3. Otherwise, ignore the return value.
-3. `(->validation "component b is invalid")` is similar to `->info` in that it
-   places a value in the system map. However, it differs in that it also has
-   implicit control flow semantics: if at any point a value is placed under
-   `[::ds/out :validation]`, then the library will stop trying to send signals
-   to that component's descendants. (It's actually a little more nuanced than
-   that, and I cover those nuances below.)
-
-One way you could make use of these features is to write something like this:
-
-``` clojure
-(ns donut.examples.validate
-  (:require
-   [donut.system :as ds]
-   [malli.core :as m]))
-
-(defn validate-config
-  [{:keys [->validation ::ds/config]}]
-  (when-let [schema (:schema config)]
-    (when-let [errors (m/explain schema (dissoc config :schema))]
-      (->validation errors))))
+(defn print-progress
+  [{::ds/keys [system]}]
+  (prn (::ds/component-id system)))
 
 (def system
   {::ds/defs
-   {:group {:component-a #::ds{:pre-start validate-config
-                               :start        "component a"
-                               :config       {:schema [:map [:foo any?] [:baz any?]]}}
-            :component-b #::ds{:pre-start validate-config
-                               :start        "component b"
-                               :config       {:schema [:map [:foo any?] [:baz any?]]}}
-            :component-c #::ds{:start "component-c"}}}})
+   {:group {:component-a #::ds{:start      "component a"
+                               :post-start {:print-progress print-progress}}
+            :component-b #::ds{:start      "component b"
+                               :post-start {:print-progress print-progress}}}}})
+
 ```
 
-We can create a generic `validate-component` function that checks whether a
-component's definition contains a `:schema` key, and use that to validate the
-rest of the component definition.
+Note that the value for `::ds/post-start` is now a map, `{:print-progress
+print-progress}`. They keys in the map are not in any way special, and they
+don't have to follow any convention; use whatever names make sense for you to
+keep your code organized.
+
+The reason why we `::ds/pre-start` and `::ds/post-start` to be maps of multiple
+handlers is so we can combine multiple handlers if we need to.
 
 ### ::ds/base
 
@@ -1645,26 +1587,19 @@ definition that will get merged with the rest of your component defs. The last
 example could be rewritten like this:
 
 ``` clojure
-(ns donut.examples.validate
-  (:require
-   [donut.system :as ds]
-   [malli.core :as m]))
-
-(defn validate-config
-  [{:keys [->validation ::ds/config]}]
-  (when-let [schema (:schema config)]
-    (when-let [errors (m/explain schema config)]
-      (->validation errors))))
+(defn print-progress
+  [{::ds/keys [system]}]
+  (prn (::ds/component-id system)))
 
 (def system
-  {::ds/base #::ds{:pre-start validate-config}
-   ::ds/defs
-   {:group {:component-a {:start  "component a"
-                          :schema [:map [:foo any?] [:baz any?]]}
-            :component-b {:start  "component b"
-                          :schema [:map [:foo any?] [:baz any?]]}
-            :component-c {:start "component-c"}}}})
+  {::ds/base #::ds{:post-start print-progress}
+   ::ds/defs {:group {:component-a #::ds{:start "component a"}
+                      :component-b #::ds{:start "component b"}}}})
 ```
+
+### `::ds/component-meta`
+
+
 
 ### Caching Component Instances
 
