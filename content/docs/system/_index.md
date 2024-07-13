@@ -303,7 +303,7 @@ Component instances are included in the map that gets passed to signal handlers
 under the `::ds/instance` key. This lets you do things like stop a web server
 that you started or perform other stateful operations. Here's a toy example:
 
-```
+``` clojure
 (let [started-system (ds/signal
                       #::ds{:defs
                             {:group-a
