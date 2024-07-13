@@ -257,7 +257,7 @@ Here's one way you could do it:
 
 ``` clojure
 (def running-system
-  (ds/signal (assoc-in system [::ds/defs :services :api-poll ::ds/config :interval] 1000)
+  (ds/signal (assoc-in system [::ds/defs :services :api-poller ::ds/config :interval] 1000)
              ::ds/start))
 ```
 
@@ -274,7 +274,7 @@ to _override_ these values:
 ``` clojure
 (def running-system
   (ds/start system
-            {[:services :api-poll ::ds/config :interval] 1000}))
+            {[:services :api-poller ::ds/config :interval] 1000}))
 ```
 
 `ds/start` is a helper that sends the `::ds/start` signal to a system, and
@@ -283,7 +283,7 @@ path to a location under `::ds/defs` in your system map, and the value is the
 new value you want at that position. It's like you're doing this:
 
 ```clojure
-(assoc-in system [::ds/defs :services :api-poll ::ds/config :interval] 1000)
+(assoc-in system [::ds/defs :services :api-poller ::ds/config :interval] 1000)
 ```
 
 except for every key/value pair found in the overrides map.
@@ -294,7 +294,7 @@ yes, you can:
 ``` clojure
 (def running-system
   (ds/start system
-            {[:services :api-poll ::ds/start] (fn new-signal-handler [_] ...)}))
+            {[:services :api-poller ::ds/start] (fn new-signal-handler [_] ...)}))
 ```
 
 This is useful for mocking out components for testing, which we'll look at more
@@ -314,7 +314,7 @@ You can also produce a new system definition with overrides using the
 ``` clojure
 (def test-system
   (ds/system system
-             {[:services :api-poll ::ds/start] (fn new-signal-handler [_] ...)}))
+             {[:services :api-poller ::ds/start] (fn new-signal-handler [_] ...)}))
 ```
 
 This doesn't send a signal to the system, it just produces a system map.
