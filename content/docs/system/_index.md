@@ -568,6 +568,22 @@ mock out a component, you just have to use `assoc-in` to assign a new
 (assoc-in system [::ds/defs :services :stack SomeMock])
 ```
 
+#### Signal handler argument
+
+Signal handlers take a single argument, which will be referred to as... the
+signal handler argument. It contains the following keys:
+
+| key                   | value                                                             |
+|-----------------------|-------------------------------------------------------------------|
+| `::ds/instance`       | The component instance, if it exists                              |
+| `::ds/system`         | The entire system map as it exists at that moment                 |
+| `::ds/config`         | The value of the component's `::ds/config` with all refs resolved |
+| `::ds/component-meta` | Explained below                                                   |
+| `::ds/component-id`   | e.g. `[:group-a :component-a]`                                    |
+
+Additionally, the entire resolved component definition gets merged into the
+signal handler argument.
+
 #### Component Instances
 
 Signal handlers return a _component instance_, which is stored in the system map
@@ -1599,7 +1615,38 @@ example could be rewritten like this:
 
 ### `::ds/component-meta`
 
+Signal handler arguments include the key `::ds/component-meta`. It is an atom,
+and its value gets merged into the system similar to instances. One use
+for it is to time signal handling:
 
+``` clojure
+(ns donut.examples.time-signals
+  (:require
+   [donut.system :as ds]))
+
+(defn record-start-time-millis
+  [{:keys [::ds/component-meta]}]
+  (reset! component-meta (System/currentTimeMillis)))
+
+(defn record-elapsed-time-millis
+  [{:keys [::ds/component-meta]}]
+  (swap! component-meta (fn [start-time-millis]
+                          (- (System/currentTimeMillis) start-time-millis))))
+
+(def record-elapsed-time-lifecycle
+  #::ds{:pre-start  {:record-start-time-millis record-start-time-millis}
+        :post-start {:record-elapsed-time-millis record-elapsed-time-millis}})
+
+(def system
+  #::ds{:base record-elapsed-time-lifecycle
+        :defs {:group-a
+               {:component-a
+                #::ds{:start (fn [_] (println "Sleeping for 1 seconds") (Thread/sleep 1000))}}}})
+
+(select-keys (ds/start system) [::ds/component-meta])
+
+#::ds{:component-meta {:group-a {:component-a 1007}}}
+```
 
 ### Caching Component Instances
 
@@ -1638,6 +1685,14 @@ test demonstrates:
     (ds/stop system)
     (is (= 11 @counter))))
 ```
+
+The component instance cache is just an atom, `ds/component-instance-cache`. If
+you need to "clear" the cache -- e.g. you want to make meaningful changes to
+your threadpool component -- you can just use `reset!`. The cached component
+will then keep responding to signals until it gets cached.
+
+Be aware that weird stuff might happen with cached values! If you cache a record
+and then reload the protocols that the record implements, things will break!
 
 ### Plugins
 
@@ -1740,6 +1795,10 @@ Example plugin definition:
 This example uses `:donut.system.plugin/system-defaults` - the purpos in this
 case is to provide some default configuration values that you can override in
 your system definition.
+
+### The validation plugin
+
+TODO describe `donut.system.validation`
 
 ### Subsystems
 
