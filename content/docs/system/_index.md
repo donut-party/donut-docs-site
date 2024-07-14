@@ -1759,15 +1759,16 @@ Not currently used, but this is where a docstring goes
 
 **`:donut.system.plugin/system-defaults`**
 
-This gets merged with a system via `(merge system-defaults system)`, meaning
-that any values in your system map take precedence over those in the plugin.
-One use case for this is if your plugin relies on some configuration, and you
-want to provide defaults that can be overridden.
+This gets merged with a system via `(recursive-merge system-defaults system)`,
+meaning that any values in your system map take precedence over those in the
+plugin. One use case for this is if your plugin relies on some configuration,
+and you want to provide defaults that can be overridden.
 
 **`:donut.system.plugin/system-merge`**
 
-This gets merge with a system via `(merge system system-merge)`, meaning that
-plugin values will take precedence over those already in the system.
+This gets merge with a system via `(recursive-merge system system-merge)`,
+meaning that plugin values will take precedence over those already in the
+system.
 
 **`:donut.system.plugin/system-update`**
 
@@ -1795,6 +1796,9 @@ Example plugin definition:
 This example uses `:donut.system.plugin/system-defaults` - the purpos in this
 case is to provide some default configuration values that you can override in
 your system definition.
+
+
+TODO explain merging vectors
 
 ### The validation plugin
 
