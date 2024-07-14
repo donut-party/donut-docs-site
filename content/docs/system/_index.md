@@ -1798,7 +1798,41 @@ your system definition.
 
 ### The validation plugin
 
-TODO describe `donut.system.validation`
+donut.system ships with `donut.system.validation/validation-plugin`, which lets
+you use [malli] to spec component configs and instances. Here's an example:
+
+```clojure
+(ns donut.examples.validate
+  (:require
+   [donut.system :as ds]
+   [donut.system.validation :as dsv]
+   [malli.core :as m]))
+
+(defn validate-config
+  [{:keys [->validation schema] :as config}]
+  (when-let [errors (and schema (m/explain schema config))]
+    (->validation errors)))
+
+(def system
+  {::ds/defs
+   {:group {:component-a #::ds{:start           (fn [_] "this doesn't get called because config is invalid")
+                               :config          {:max "100"}
+                               :config-schema   [:map [:max pos-int?]]
+                               :instance-schema pos-int?}}}
+   ::ds/plugins [dsv/validation-plugin]})
+
+(ds/start system)
+```
+
+Whenn you include the `validation-plugin` plugin, it adds `::ds/pre-start` and
+`::ds/post-start` handlers. The `::ds/pre-start` handler will look for a
+`::ds/config-schema` value for the component, and if it's there will use it to
+validate the config. Here, the config is invalid so it throws an exception that
+includes an explanation of how the config is invalid.
+
+The plugin's `::ds/post-start` handler uses `::ds/instance-schema` to validate
+the instance that `::ds/start` returns.
+
 
 ### Subsystems
 
