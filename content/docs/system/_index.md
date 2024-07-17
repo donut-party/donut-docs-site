@@ -1900,6 +1900,30 @@ responsible for forwarding all other signals to the subsystem.
 should be imported into the subsystem. This is how the subsystems can reference
 the parent system's component `[:services :stack]`.
 
+## Async signaling
+
+donut.system can send signals to components in parallel rather than one at a time.
+To enable this, add `::ds/execute` to your system. The value should be a function
+that executes a function asynchronously. For example:
+
+``` clojure
+(ds/start (assoc system ::ds/execute (fn [f] (future (f)))))
+```
+
+You might want to use an
+[executor](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/Executor.html).
+Here's how you could do that:
+
+```clojure
+(let [executor (java.util.concurrent.Executors/newFixedThreadPool 8)]
+  (try
+    (ds/start (assoc system ::ds/execute (fn [f] (.execute executor f)))
+    (finally
+      (.shutdown executor)))))
+```
+
+This is a Clojure-only feature. It's not implemented for ClojureScript.
+
 ## Purpose
 
 Now that we've covered how to use the library, let's talk about why you'd use
