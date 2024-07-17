@@ -6,7 +6,7 @@
 
 ## `:donut.system/invalid-system` {#:donut.system_invalid-system}
 
-See [your first system]({{< ref "/docs/system/tutorial/01-your-first-system/"> }}) for a description of how to structure your system mpa.
+See [your first system]({{< ref "/docs/system/tutorial/01-your-first-system" >}}) for a description of how to structure your system mpa.
 
 ## `:donut.system.validation/invalid-component-config` {#:donut.system.validation_invalid-component-config}
 
