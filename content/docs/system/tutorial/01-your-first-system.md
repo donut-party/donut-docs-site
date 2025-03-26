@@ -111,5 +111,5 @@ other signals? Let's look at that next.
 * Systems are collections of components
 * You define components as maps of signal handlers
 * Signal handlers produce behavior in response to signals
-* You place components in a system maps under component groups, where component
+* You place components in a system as maps under component groups, where component
   groups live under the `::ds/defs` key
